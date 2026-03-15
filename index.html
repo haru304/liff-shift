@@ -220,6 +220,22 @@
 </div>
 
 <script>
+  // キャッシュ
+const availCache = {};
+const recruitCache = {};
+const applicationCache = {};
+const myShiftCache = {};
+
+function setCache(cache, key, data, ttl = 5 * 60 * 1000) {
+  cache[key] = { data, timestamp: Date.now(), ttl };
+}
+
+function getCache(cache, key) {
+  const entry = cache[key];
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > entry.ttl) return null;
+  return entry.data;
+}
   const MY_LIFF_ID = "2009335817-NPTGb4xl";
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwHFgzr7x-Ax-_qZzztekA75Aset0tQgb0_0tJ140eEt5zO-a-0HE6oOljTMTY1Wo9Y/exec";
 
@@ -392,9 +408,23 @@
     availMonth += delta;
     if (availMonth > 12) { availMonth = 1; availYear++; }
     if (availMonth < 1) { availMonth = 12; availYear--; }
-    await loadAvailCalendar();
-  }
 
+    const yearMonth = `${availYear}-${String(availMonth).padStart(2,'0')}`;
+    const cached = getCache(availCache, yearMonth);
+    if (cached) { availData = cached; renderAvailCalendar(); return; }
+
+    const result = await callGAS({ action: 'getAvailability', storeId, uid, yearMonth });
+    availData = {};
+    if (result.success) {
+      for (const d of result.data) {
+        if (!availData[d.date]) availData[d.date] = [];
+        availData[d.date].push({ startTime: d.startTime, endTime: d.endTime, note: d.note });
+      }
+    }
+    setCache(availCache, yearMonth, availData, 10 * 60 * 1000);
+    renderAvailCalendar();
+  }
+  
   function renderAvailCalendar() {
     document.getElementById('availCalTitle').innerText = `${availYear}年${availMonth}月`;
     const headers = ['日','月','火','水','木','金','土'];
@@ -561,12 +591,46 @@
     renderRecruitCalendar();
   }
 
-  async function changeRecruitMonth(delta) {
-    recruitMonth += delta;
-    if (recruitMonth > 12) { recruitMonth = 1; recruitYear++; }
-    if (recruitMonth < 1) { recruitMonth = 12; recruitYear--; }
-    await loadRecruitCalendar();
+async function changeRecruitMonth(delta) {
+  recruitMonth += delta;
+  if (recruitMonth > 12) { recruitMonth = 1; recruitYear++; }
+  if (recruitMonth < 1) { recruitMonth = 12; recruitYear--; }
+
+  const yearMonth = `${recruitYear}-${String(recruitMonth).padStart(2,'0')}`;
+  const cachedR = getCache(recruitCache, yearMonth);
+  const cachedA = getCache(applicationCache, yearMonth);
+
+  if (cachedR && cachedA) {
+    recruitData = cachedR;
+    myApplications = cachedA;
+    renderRecruitCalendar();
+    return;
   }
+
+  const [rResult, aResult] = await Promise.all([
+    callGAS({ action: 'getRecruitments', storeId, yearMonth }),
+    callGAS({ action: 'getMyApplications', storeId, uid, yearMonth })
+  ]);
+
+  recruitData = {};
+  if (rResult.success) {
+    for (const d of rResult.data) {
+      if (!recruitData[d.date]) recruitData[d.date] = [];
+      recruitData[d.date].push(d);
+    }
+  }
+  setCache(recruitCache, yearMonth, recruitData, 3 * 60 * 1000); // 3分
+
+  myApplications = {};
+  if (aResult.success) {
+    for (const a of aResult.data) {
+      myApplications[`${a.date}_${a.section}_${a.startTime}`] = a.status;
+    }
+  }
+  setCache(applicationCache, yearMonth, myApplications, 3 * 60 * 1000); // 3分
+
+  renderRecruitCalendar();
+}
 
   function renderRecruitCalendar() {
     document.getElementById('recruitCalTitle').innerText = `${recruitYear}年${recruitMonth}月`;
@@ -657,18 +721,22 @@
     document.getElementById('recruitOverlay').style.display = 'none';
     document.getElementById('recruitModal').style.display = 'none';
   }
+async function changeMyShiftMonth(delta) {
+  myShiftMonth += delta;
+  if (myShiftMonth > 12) { myShiftMonth = 1; myShiftYear++; }
+  if (myShiftMonth < 1) { myShiftMonth = 12; myShiftYear--; }
 
-  // ===== 自分のシフト =====
+  const yearMonth = `${myShiftYear}-${String(myShiftMonth).padStart(2,'0')}`;
+  const cached = getCache(myShiftCache, yearMonth);
+  if (cached) { myShiftData = cached; renderMyShifts(); return; }
 
-  async function changeMyShiftMonth(delta) {
-    myShiftMonth += delta;
-    if (myShiftMonth > 12) { myShiftMonth = 1; myShiftYear++; }
-    if (myShiftMonth < 1) { myShiftMonth = 12; myShiftYear--; }
-    const yearMonth = `${myShiftYear}-${String(myShiftMonth).padStart(2,'0')}`;
-    const result = await callGAS({ action: 'getMyShifts', storeId, uid, yearMonth });
-    if (result.success) myShiftData = result.data;
-    renderMyShifts();
+  const result = await callGAS({ action: 'getMyShifts', storeId, uid, yearMonth });
+  if (result.success) {
+    myShiftData = result.data;
+    setCache(myShiftCache, yearMonth, myShiftData, 10 * 60 * 1000);
   }
+  renderMyShifts();
+}
 
   function renderMyShifts() {
     document.getElementById('myShiftCalTitle').innerText = `${myShiftYear}年${myShiftMonth}月`;
