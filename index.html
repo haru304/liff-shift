@@ -11,13 +11,19 @@
 
     /* Bottom Tab */
     .bottom-tab { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; display: flex; z-index: 10; }
-    .tab-btn { flex: 1; padding: 12px 0; text-align: center; border: none; background: none; cursor: pointer; font-size: 11px; color: #aaa; }
+    .tab-btn { flex: 1; padding: 10px 0; text-align: center; border: none; background: none; cursor: pointer; font-size: 10px; color: #aaa; }
     .tab-btn.active { color: #06C755; }
-    .tab-btn .tab-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+    .tab-btn .tab-icon { font-size: 20px; display: block; margin-bottom: 2px; }
 
     /* Screen */
     .screen { display: none; padding: 15px; }
     .screen.active { display: block; }
+
+    /* Skeleton */
+    .skeleton { background: #eee; border-radius: 6px; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .skeleton-cal { display: grid; grid-template-columns: repeat(7,1fr); gap:3px; margin-top:8px; }
+    .skeleton-cell { height: 55px; border-radius: 8px; }
 
     /* Calendar */
     .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -37,6 +43,7 @@
     .day-badge.submitted { background: #06C755; }
     .day-badge.recruit { background: #007AFF; }
     .day-badge.applied { background: #FF9500; }
+    .day-badge.confirmed { background: #9C27B0; }
 
     /* Modal */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; }
@@ -58,20 +65,49 @@
 
     /* 募集枠カード */
     .recruit-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
-    .recruit-card .section-name { font-weight: bold; font-size: 15px; margin-bottom:5px; }
+    .recruit-card .section-name { font-weight: bold; font-size: 15px; margin-bottom: 5px; }
     .recruit-card .time-info { color: #555; font-size: 13px; margin-bottom: 6px; }
     .recruit-card .slots { font-size: 12px; color: #888; margin-bottom: 8px; }
     .apply-btn { width: 100%; padding: 10px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
     .applied-badge { width: 100%; padding: 10px; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; font-size: 14px; color: #2e7d32; text-align: center; font-weight: bold; }
 
+    /* 自分のシフト */
+    .shift-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 12px; }
+    .shift-date { text-align: center; min-width: 45px; }
+    .shift-date .date-num { font-size: 22px; font-weight: bold; color: #06C755; }
+    .shift-date .date-day { font-size: 11px; color: #888; }
+    .shift-info { flex: 1; }
+    .shift-section { font-weight: bold; font-size: 14px; margin-bottom: 3px; }
+    .shift-time { font-size: 13px; color: #555; }
+
+    /* 全体シフト横バー */
+    .allshift-container { overflow-x: auto; margin-top: 5px; }
+    .allshift-table { border-collapse: collapse; font-size: 11px; }
+    .allshift-table th { background: #333; color: white; padding: 4px 2px; text-align: center; border: 1px solid #555; white-space: nowrap; }
+    .allshift-table td { padding: 2px; border: 1px solid #eee; vertical-align: middle; height: 30px; }
+    .allshift-table .name-cell { background: #f5f5f5; font-weight: bold; padding: 4px 6px; white-space: nowrap; min-width: 55px; position: sticky; left: 0; z-index: 1; font-size: 11px; }
+    .allshift-table .section-header { background: #e8f5e9; font-weight: bold; padding: 4px 6px; position: sticky; left: 0; z-index: 1; font-size: 11px; color: #2e7d32; }
+    .shift-bar { background: #06C755; height: 20px; border-radius: 3px; }
+    .empty-cell { background: #fafafa; }
+    .total-row td { background: #f0f0f0; text-align: center; font-size: 10px; font-weight: bold; color: #333; }
+
     .section-title { font-size: 14px; font-weight: bold; color: #555; margin: 15px 0 8px; }
-    .empty-msg { text-align: center; color: #aaa; padding: 20px; font-size: 14px; }
+    .empty-msg { text-align: center; color: #aaa; padding: 30px 20px; font-size: 14px; }
   </style>
 </head>
 <body>
 
 <div class="header">📅 シフト管理</div>
-<div id="initStatus">初期化中...</div>
+<div id="initStatus">
+  <div style="margin-bottom:10px;">読み込み中...</div>
+  <!-- スケルトン -->
+  <div style="padding:0 15px;">
+    <div class="skeleton" style="height:20px; width:120px; margin:0 auto 15px;"></div>
+    <div class="skeleton-cal">
+      ${Array(35).fill('<div class="skeleton skeleton-cell"></div>').join('')}
+    </div>
+  </div>
+</div>
 
 <!-- 希望提出タブ -->
 <div id="availScreen" class="screen">
@@ -97,13 +133,40 @@
   <div class="calendar-grid" id="recruitCalGrid" style="margin-top:3px;"></div>
 </div>
 
+<!-- 自分のシフトタブ -->
+<div id="myShiftScreen" class="screen">
+  <div class="calendar-header">
+    <button class="cal-nav" onclick="changeMyShiftMonth(-1)">◀</button>
+    <span id="myShiftCalTitle" style="font-size:16px; font-weight:bold;"></span>
+    <button class="cal-nav" onclick="changeMyShiftMonth(1)">▶</button>
+  </div>
+  <div id="myShiftList"></div>
+</div>
+
+<!-- 全体シフトタブ -->
+<div id="allShiftScreen" class="screen">
+  <div class="calendar-header">
+    <button class="cal-nav" onclick="changeAllShiftDate(-1)">◀</button>
+    <span id="allShiftTitle" style="font-size:15px; font-weight:bold;"></span>
+    <button class="cal-nav" onclick="changeAllShiftDate(1)">▶</button>
+  </div>
+  <div style="font-size:11px; color:#888; margin-bottom:8px;">確定シフトのみ表示</div>
+  <div id="allShiftContent"></div>
+</div>
+
 <!-- Bottom Tab -->
 <div class="bottom-tab" id="bottomTab" style="display:none;">
-  <button class="tab-btn active" id="tabAvail" onclick="switchTab('avail')">
+  <button class="tab-btn" id="tabAvail" onclick="switchTab('avail')">
     <span class="tab-icon">📅</span>希望提出
   </button>
   <button class="tab-btn" id="tabRecruit" onclick="switchTab('recruit')">
-    <span class="tab-icon">🔍</span>募集シフト
+    <span class="tab-icon">🔍</span>募集
+  </button>
+  <button class="tab-btn" id="tabMyShift" onclick="switchTab('myshift')">
+    <span class="tab-icon">👤</span>自分
+  </button>
+  <button class="tab-btn" id="tabAllShift" onclick="switchTab('allshift')">
+    <span class="tab-icon">📋</span>全体
   </button>
 </div>
 
@@ -135,18 +198,26 @@
 
   const JS_DAY_MAP = ['日','月','火','水','木','金','土'];
   const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
   // カレンダー状態
   let availYear = today.getFullYear();
   let availMonth = today.getMonth() + 1;
-  let availData = {}; // date -> [{startTime, endTime, note}]
+  let availData = {};
 
   let recruitYear = today.getFullYear();
   let recruitMonth = today.getMonth() + 1;
-  let recruitData = {}; // date -> [{section, startTime, endTime, requiredNum, confirmedStaff}]
-  let myApplications = {}; // date_section_startTime -> true
+  let recruitData = {};
+  let myApplications = {};
 
-  // ===== 初期化 =====
+  let myShiftYear = today.getFullYear();
+  let myShiftMonth = today.getMonth() + 1;
+  let myShiftData = [];
+
+  let allShiftDate = new Date(today);
+  let allShiftCache = {};
+
+  // ===== GAS呼び出し =====
 
   async function callGAS(params) {
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(params) });
@@ -164,49 +235,110 @@
     return html;
   }
 
+  // ===== sessionStorageキャッシュ =====
+
+  function saveCache(key, data) {
+    try { sessionStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+  }
+
+  function loadCache(key) {
+    try {
+      const d = sessionStorage.getItem(key);
+      return d ? JSON.parse(d) : null;
+    } catch(e) { return null; }
+  }
+
+  // ===== 初期化 =====
+
   window.onload = async function() {
-    const status = document.getElementById('initStatus');
+    const statusEl = document.getElementById('initStatus');
     try {
       await liff.init({ liffId: MY_LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
       userProfile = await liff.getProfile();
       uid = userProfile.userId;
 
-      const result = await callGAS({ action: 'getStaffInfo', uid });
+      // キャッシュからスタッフ情報を取得
+      const cachedStaff = loadCache('staffInfo_' + uid);
+      if (cachedStaff) {
+        storeId = cachedStaff.storeId;
+        staffName = cachedStaff.name;
+      }
+
+      // 今月のyearMonth
+      const yearMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+
+      // 一括取得（1リクエスト）
+      const result = await callGAS({ action: 'getInitialData', uid, yearMonth });
       if (!result.success) {
-        status.innerText = '❌ ' + result.msg;
+        statusEl.innerText = '❌ ' + result.msg;
         return;
       }
 
-      storeId = result.storeId;
-      staffName = result.name;
+      // データをセット
+      storeId = result.staffInfo.storeId;
+      staffName = result.staffInfo.name;
+      saveCache('staffInfo_' + uid, result.staffInfo);
 
-      status.style.display = 'none';
+      // 希望提出データ
+      availData = {};
+      for (const d of result.availability) {
+        if (!availData[d.date]) availData[d.date] = [];
+        availData[d.date].push({ startTime: d.startTime, endTime: d.endTime, note: d.note });
+      }
+
+      // 募集データ
+      recruitData = {};
+      for (const d of result.recruitments) {
+        if (!recruitData[d.date]) recruitData[d.date] = [];
+        recruitData[d.date].push(d);
+      }
+
+      // 応募データ
+      myApplications = {};
+      for (const a of result.myApplications) {
+        const key = `${a.date}_${a.section}_${a.startTime}`;
+        myApplications[key] = a.status;
+      }
+
+      // 自分のシフト
+      myShiftData = result.myShifts || [];
+
+      // 画面表示
+      statusEl.style.display = 'none';
       document.getElementById('bottomTab').style.display = 'flex';
-      switchTab('avail');
+
+      // URLパラメータでタブを決定
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab') || 'avail';
+      switchTab(tabParam);
 
     } catch (err) {
-      status.innerText = '❌ エラー: ' + err.message;
+      statusEl.innerText = '❌ エラー: ' + err.message;
     }
   };
 
   // ===== タブ切り替え =====
 
   function switchTab(tab) {
-    document.getElementById('availScreen').classList.remove('active');
-    document.getElementById('recruitScreen').classList.remove('active');
-    document.getElementById('tabAvail').classList.remove('active');
-    document.getElementById('tabRecruit').classList.remove('active');
+    ['avail','recruit','myshift','allshift'].forEach(t => {
+      document.getElementById(t === 'avail' ? 'availScreen' :
+        t === 'recruit' ? 'recruitScreen' :
+        t === 'myshift' ? 'myShiftScreen' : 'allShiftScreen').classList.remove('active');
+      document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)
+        .replace('shift','Shift').replace('hift','hift')).classList.remove('active');
+    });
 
-    if (tab === 'avail') {
-      document.getElementById('availScreen').classList.add('active');
-      document.getElementById('tabAvail').classList.add('active');
-      loadAvailCalendar();
-    } else {
-      document.getElementById('recruitScreen').classList.add('active');
-      document.getElementById('tabRecruit').classList.add('active');
-      loadRecruitCalendar();
-    }
+    const screenMap = { avail:'availScreen', recruit:'recruitScreen', myshift:'myShiftScreen', allshift:'allShiftScreen' };
+    const tabMap = { avail:'tabAvail', recruit:'tabRecruit', myshift:'tabMyShift', allshift:'tabAllShift' };
+
+    document.getElementById(screenMap[tab]).classList.add('active');
+    document.getElementById(tabMap[tab]).classList.add('active');
+
+    if (tab === 'avail') renderAvailCalendar();
+    else if (tab === 'recruit') renderRecruitCalendar();
+    else if (tab === 'myshift') renderMyShifts();
+    else if (tab === 'allshift') renderAllShift();
   }
 
   // ===== 希望提出カレンダー =====
@@ -246,7 +378,7 @@
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${availYear}-${String(availMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dow = new Date(availYear, availMonth - 1, d).getDay();
-      const isToday = dateStr === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const isToday = dateStr === todayStr;
       const hasData = !!availData[dateStr];
       const numClass = `day-num ${dow===0?'sun':dow===6?'sat':''}`;
       html += `
@@ -263,10 +395,8 @@
     const dayName = JS_DAY_MAP[d.getDay()];
     document.getElementById('availModalTitle').innerText = `${dateStr}（${dayName}）`;
     document.getElementById('availModalStatus').className = 'status';
-
     const existing = availData[dateStr] || [];
     renderAvailModalContent(dateStr, existing);
-
     document.getElementById('availOverlay').style.display = 'block';
     document.getElementById('availModal').style.display = 'block';
   }
@@ -321,17 +451,12 @@
     const endTime = document.getElementById('new_end').value;
     const note = document.getElementById('new_note').value.trim();
     const status = document.getElementById('availModalStatus');
-
     if (startTime >= endTime) {
       status.className = 'status error';
       status.innerText = '❌ 終了時間は開始時間より後にしてください';
       return;
     }
-
-    const result = await callGAS({
-      action: 'saveAvailability', storeId, uid, date: dateStr,
-      entries: [{ startTime, endTime, note }]
-    });
+    const result = await callGAS({ action: 'saveAvailability', storeId, uid, date: dateStr, entries: [{ startTime, endTime, note }] });
     if (result.success) {
       availData[dateStr] = [{ startTime, endTime, note }];
       status.className = 'status success';
@@ -353,9 +478,7 @@
       });
     }
     const status = document.getElementById('availModalStatus');
-    const result = await callGAS({
-      action: 'saveAvailability', storeId, uid, date: dateStr, entries
-    });
+    const result = await callGAS({ action: 'saveAvailability', storeId, uid, date: dateStr, entries });
     if (result.success) {
       availData[dateStr] = entries;
       status.className = 'status success';
@@ -369,9 +492,7 @@
 
   async function deleteAvail(dateStr) {
     if (!confirm('この日の希望を削除しますか？')) return;
-    const result = await callGAS({
-      action: 'saveAvailability', storeId, uid, date: dateStr, entries: []
-    });
+    const result = await callGAS({ action: 'saveAvailability', storeId, uid, date: dateStr, entries: [] });
     if (result.success) {
       delete availData[dateStr];
       closeAvailModal();
@@ -392,7 +513,6 @@
       callGAS({ action: 'getRecruitments', storeId, yearMonth }),
       callGAS({ action: 'getMyApplications', storeId, uid, yearMonth })
     ]);
-
     recruitData = {};
     if (rResult.success) {
       for (const d of rResult.data) {
@@ -400,15 +520,12 @@
         recruitData[d.date].push(d);
       }
     }
-
     myApplications = {};
     if (aResult.success) {
       for (const a of aResult.data) {
-        const key = `${a.date}_${a.section}_${a.startTime}`;
-        myApplications[key] = a.status;
+        myApplications[`${a.date}_${a.section}_${a.startTime}`] = a.status;
       }
     }
-
     renderRecruitCalendar();
   }
 
@@ -434,15 +551,9 @@
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${recruitYear}-${String(recruitMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dow = new Date(recruitYear, recruitMonth - 1, d).getDay();
-      const isToday = dateStr === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const isToday = dateStr === todayStr;
       const hasRecruit = !!recruitData[dateStr];
-
-      // この日に応募済みのものがあるか
-      const hasApplied = hasRecruit && recruitData[dateStr].some(r => {
-        const key = `${dateStr}_${r.section}_${r.startTime}`;
-        return !!myApplications[key];
-      });
-
+      const hasApplied = hasRecruit && recruitData[dateStr].some(r => !!myApplications[`${dateStr}_${r.section}_${r.startTime}`]);
       const numClass = `day-num ${dow===0?'sun':dow===6?'sat':''}`;
       let badge = '';
       if (hasApplied) badge = `<div class="day-badge applied">応募済</div>`;
@@ -461,10 +572,8 @@
     const d = new Date(dateStr + 'T00:00:00');
     const dayName = JS_DAY_MAP[d.getDay()];
     document.getElementById('recruitModalTitle').innerText = `${dateStr}（${dayName}）募集枠`;
-
     const slots = recruitData[dateStr] || [];
     let html = '';
-
     if (slots.length === 0) {
       html = '<div class="empty-msg">募集枠がありません</div>';
     } else {
@@ -473,7 +582,6 @@
         const appStatus = myApplications[key];
         const confirmed = parseInt(s.confirmedStaff) || 0;
         const remaining = parseInt(s.requiredNum) - confirmed;
-
         let actionHtml = '';
         if (appStatus === 'approved') {
           actionHtml = `<div class="applied-badge">✅ 承認済み</div>`;
@@ -484,7 +592,6 @@
         } else {
           actionHtml = `<button class="apply-btn" onclick="applyShift('${dateStr}','${s.section}','${s.startTime}','${s.endTime}',this)">応募する</button>`;
         }
-
         html += `
           <div class="recruit-card">
             <div class="section-name">📌 ${s.section}</div>
@@ -494,7 +601,6 @@
           </div>`;
       });
     }
-
     document.getElementById('recruitModalContent').innerHTML = html;
     document.getElementById('recruitOverlay').style.display = 'block';
     document.getElementById('recruitModal').style.display = 'block';
@@ -503,16 +609,9 @@
   async function applyShift(dateStr, section, startTime, endTime, btn) {
     btn.disabled = true;
     btn.innerText = '送信中...';
-    const result = await callGAS({
-      action: 'applyShift',
-      storeId, uid,
-      name: staffName,
-      date: dateStr,
-      section, startTime, endTime
-    });
+    const result = await callGAS({ action: 'applyShift', storeId, uid, name: staffName, date: dateStr, section, startTime, endTime });
     if (result.success) {
-      const key = `${dateStr}_${section}_${startTime}`;
-      myApplications[key] = 'pending';
+      myApplications[`${dateStr}_${section}_${startTime}`] = 'pending';
       btn.outerHTML = `<div class="applied-badge" style="background:#fff3e0; border-color:#ffb74d; color:#e65100;">⏳ 審査中</div>`;
       renderRecruitCalendar();
     } else {
@@ -525,6 +624,162 @@
   function closeRecruitModal() {
     document.getElementById('recruitOverlay').style.display = 'none';
     document.getElementById('recruitModal').style.display = 'none';
+  }
+
+  // ===== 自分のシフト =====
+
+  async function changeMyShiftMonth(delta) {
+    myShiftMonth += delta;
+    if (myShiftMonth > 12) { myShiftMonth = 1; myShiftYear++; }
+    if (myShiftMonth < 1) { myShiftMonth = 12; myShiftYear--; }
+    const yearMonth = `${myShiftYear}-${String(myShiftMonth).padStart(2,'0')}`;
+    const result = await callGAS({ action: 'getMyShifts', storeId, uid, yearMonth });
+    if (result.success) myShiftData = result.data;
+    renderMyShifts();
+  }
+
+  function renderMyShifts() {
+    document.getElementById('myShiftCalTitle').innerText = `${myShiftYear}年${myShiftMonth}月`;
+    const yearMonth = `${myShiftYear}-${String(myShiftMonth).padStart(2,'0')}`;
+    const filtered = myShiftData.filter(s => String(s.date).slice(0, 7) === yearMonth);
+    const container = document.getElementById('myShiftList');
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-msg">確定シフトはありません</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(s => {
+      const d = new Date(s.date + 'T00:00:00');
+      const dow = JS_DAY_MAP[d.getDay()];
+      const dayNum = d.getDate();
+      const isToday = s.date === todayStr;
+      return `
+        <div class="shift-card" style="${isToday ? 'border-left: 4px solid #06C755;' : ''}">
+          <div class="shift-date">
+            <div class="date-num" style="${d.getDay()===0?'color:#e00':d.getDay()===6?'color:#00e':'color:#06C755'}">${dayNum}</div>
+            <div class="date-day">${dow}</div>
+          </div>
+          <div class="shift-info">
+            <div class="shift-section">📌 ${s.section}</div>
+            <div class="shift-time">🕐 ${s.startTime} 〜 ${s.endTime}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ===== 全体シフト =====
+
+  function allShiftDateStr() {
+    return `${allShiftDate.getFullYear()}-${String(allShiftDate.getMonth()+1).padStart(2,'0')}-${String(allShiftDate.getDate()).padStart(2,'0')}`;
+  }
+
+  async function changeAllShiftDate(delta) {
+    allShiftDate.setDate(allShiftDate.getDate() + delta);
+    await renderAllShift();
+  }
+
+  async function renderAllShift() {
+    const dateStr = allShiftDateStr();
+    const d = new Date(dateStr + 'T00:00:00');
+    const dow = JS_DAY_MAP[d.getDay()];
+    document.getElementById('allShiftTitle').innerText = `${dateStr}（${dow}）`;
+
+    const container = document.getElementById('allShiftContent');
+    container.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">読み込み中...</div>';
+
+    // キャッシュ確認
+    let data;
+    if (allShiftCache[dateStr]) {
+      data = allShiftCache[dateStr];
+    } else {
+      const result = await callGAS({ action: 'getAllShifts', storeId, date: dateStr });
+      data = result.success ? result.data : [];
+      allShiftCache[dateStr] = data;
+    }
+
+    if (data.length === 0) {
+      container.innerHTML = '<div class="empty-msg">この日の確定シフトはありません</div>';
+      return;
+    }
+
+    // セクションごとにまとめる
+    const sections = {};
+    for (const s of data) {
+      if (!sections[s.section]) sections[s.section] = [];
+      const staffList = String(s.confirmedStaff || '').split(',').map(n => n.trim()).filter(n => n);
+      for (const name of staffList) {
+        sections[s.section].push({ name, startTime: s.startTime, endTime: s.endTime });
+      }
+    }
+
+    // 時間範囲を計算
+    const allTimes = [];
+    for (let h = 0; h < 24; h++) {
+      for (let m of [0, 30]) allTimes.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+    }
+
+    let minTime = '23:30', maxTime = '00:00';
+    for (const s of data) {
+      if (s.startTime < minTime) minTime = s.startTime;
+      if (s.endTime > maxTime) maxTime = s.endTime;
+    }
+    const slots = allTimes.filter(t => t >= minTime && t < maxTime);
+
+    // テーブル生成
+    let html = '<div class="allshift-container"><table class="allshift-table"><thead><tr>';
+    html += `<th style="min-width:55px; position:sticky; left:0; z-index:2; background:#333;">名前</th>`;
+    for (const t of slots) {
+      const isHour = t.endsWith(':00');
+      html += `<th style="min-width:${isHour?'34px':'26px'}; font-size:${isHour?'10px':'8px'}; color:${isHour?'white':'#aaa'};">${isHour ? t : t.slice(3)}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    // 人数合計カウント用
+    const totalCount = {};
+    slots.forEach(t => totalCount[t] = 0);
+
+    for (const [section, members] of Object.entries(sections)) {
+      // セクションヘッダー行
+      html += `<tr><td colspan="${slots.length + 1}" class="section-header">📌 ${section}</td></tr>`;
+
+      for (const member of members) {
+        html += `<tr><td class="name-cell">${member.name}</td>`;
+        let skipCount = 0;
+        for (let si = 0; si < slots.length; si++) {
+          if (skipCount > 0) { skipCount--; continue; }
+          const slot = slots[si];
+          const slotEnd = allTimes[allTimes.indexOf(slot) + 1];
+          if (member.startTime <= slot && slotEnd && member.endTime >= slotEnd) {
+            if (member.startTime === slot) {
+              const startIdx = slots.indexOf(member.startTime);
+              let endIdx = slots.indexOf(member.endTime);
+              if (endIdx < 0) endIdx = slots.length;
+              const span = endIdx - startIdx;
+              skipCount = span - 1;
+              html += `<td colspan="${span}" style="padding:3px;"><div class="shift-bar"></div></td>`;
+              // 合計カウント
+              for (let k = startIdx; k < endIdx; k++) {
+                if (slots[k]) totalCount[slots[k]] = (totalCount[slots[k]] || 0) + 1;
+              }
+            }
+          } else {
+            html += `<td class="empty-cell"></td>`;
+          }
+        }
+        html += '</tr>';
+      }
+    }
+
+    // 人数合計行
+    html += `<tr class="total-row"><td class="name-cell" style="background:#e0e0e0;">人数</td>`;
+    for (const t of slots) {
+      html += `<td>${totalCount[t] || 0}</td>`;
+    }
+    html += '</tr>';
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
   }
 </script>
 </body>
