@@ -5,368 +5,271 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #f5f5f5; }
-    .header { background: #06C755; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
-    .menu { display: flex; flex-direction: column; gap: 10px; padding: 20px; }
-    .menu-btn { background: white; border: none; border-radius: 10px; padding: 20px; text-align: left; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; display: flex; align-items: center; gap: 15px; }
-    .menu-btn .icon { font-size: 24px; }
-    .menu-btn .title { font-weight: bold; }
-    .menu-btn .desc { font-size: 12px; color: #888; margin-top: 3px; }
-    .screen { display: none; padding: 20px; }
+    body { font-family: sans-serif; background: #f5f5f5; padding-bottom: 70px; }
+    .header { background: #06C755; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+    #initStatus { padding: 30px 20px; text-align: center; color: #888; }
+
+    /* Bottom Tab */
+    .bottom-tab { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; display: flex; z-index: 10; }
+    .tab-btn { flex: 1; padding: 10px 0; text-align: center; border: none; background: none; cursor: pointer; font-size: 10px; color: #aaa; }
+    .tab-btn.active { color: #06C755; }
+    .tab-btn .tab-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+    /* Screen */
+    .screen { display: none; padding: 15px; }
     .screen.active { display: block; }
-    .back-btn { background: none; border: none; color: #06C755; font-size: 16px; cursor: pointer; margin-bottom: 15px; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; font-size: 14px; color: #555; margin-bottom: 5px; font-weight: bold; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
-    .tag-input { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: white; min-height: 45px; }
-    .tag { background: #06C755; color: white; padding: 3px 10px; border-radius: 20px; font-size: 14px; display: flex; align-items: center; gap: 5px; }
-    .tag-del { cursor: pointer; font-size: 16px; }
-    .tag-add { display: flex; gap: 5px; margin-top: 5px; }
-    .tag-add input { flex: 1; }
-    .tag-add button { background: #06C755; color: white; border: none; border-radius: 5px; padding: 10px 15px; cursor: pointer; }
-    .save-btn { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    .preview-btn { width: 100%; padding: 15px; background: #007AFF; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    .save-btn:disabled, .preview-btn:disabled { background: #aaa; }
-    .status { margin-top: 10px; padding: 10px; border-radius: 5px; text-align: center; display: none; }
-    .status.success { background: #e0ffe0; color: green; display: block; }
-    .status.error { background: #ffe0e0; color: red; display: block; }
-    #initStatus { padding: 20px; text-align: center; color: #888; }
-    .tab-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-    .tab-btn { padding: 8px 14px; border-radius: 20px; border: 2px solid #06C755; font-size: 14px; cursor: pointer; white-space: nowrap; }
-    .tab-btn.active { background: #06C755; color: white; }
-    .tab-btn.inactive { background: white; color: #06C755; }
-    .main-tab-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-    .main-tab-btn { flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #06C755; font-size: 15px; font-weight: bold; cursor: pointer; text-align: center; }
-    .main-tab-btn.active { background: #06C755; color: white; }
-    .main-tab-btn.inactive { background: white; color: #06C755; }
-    .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-    .cal-nav { background: none; border: 1px solid #ddd; border-radius: 5px; padding: 8px 15px; cursor: pointer; font-size: 16px; }
+
+    /* Skeleton */
+    .skeleton { background: #eee; border-radius: 6px; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .skeleton-cal { display: grid; grid-template-columns: repeat(7,1fr); gap:3px; margin-top:8px; }
+    .skeleton-cell { height: 55px; border-radius: 8px; }
+
+    /* Calendar */
+    .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .cal-nav { background: none; border: 1px solid #ddd; border-radius: 5px; padding: 7px 14px; cursor: pointer; font-size: 15px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
     .cal-header-cell { text-align: center; font-size: 11px; font-weight: bold; padding: 5px 0; color: #555; }
     .cal-header-cell.sun { color: #e00; }
     .cal-header-cell.sat { color: #00e; }
-    .cal-day { border-radius: 8px; padding: 6px 3px; text-align: center; cursor: pointer; border: 1px solid #eee; background: white; min-height: 60px; position: relative; }
+    .cal-day { border-radius: 8px; padding: 5px 2px; text-align: center; cursor: pointer; border: 1px solid #eee; background: white; min-height: 55px; }
     .cal-day.empty { background: transparent; border: none; cursor: default; }
-    .cal-day.holiday { background: #fff0f0; }
-    .cal-day.overridden { border: 2px solid #007AFF; }
+    .cal-day.today { border: 2px solid #06C755; }
     .cal-day .day-num { font-size: 13px; font-weight: bold; }
     .cal-day .day-num.sun { color: #e00; }
     .cal-day .day-num.sat { color: #00e; }
     .cal-day .day-num.hol { color: #e00; }
-    .cal-day .day-badge { font-size: 9px; background: #06C755; color: white; border-radius: 3px; padding: 1px 3px; margin-top: 2px; display: inline-block; }
-    .cal-day .day-badge.override { background: #007AFF; }
-    .cal-day .day-badge.noshift { background: #ccc; }
+    .cal-day .day-badge { font-size: 8px; border-radius: 3px; padding: 1px 3px; margin-top: 2px; display: inline-block; color: white; }
+    .day-badge.submitted { background: #06C755; }
+    .day-badge.recruit { background: #007AFF; }
+    .day-badge.applied { background: #FF9500; }
+    .day-badge.confirmed { background: #9C27B0; }
+
+    /* Modal */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; }
-    .modal { display: none; background: white; border-radius: 15px 15px 0 0; position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; max-height: 80vh; overflow-y: auto; z-index: 101; }
+    .modal { display: none; background: white; border-radius: 15px 15px 0 0; position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; max-height: 85vh; overflow-y: auto; z-index: 101; }
     .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; }
-    .preview-container { margin-top: 20px; overflow-x: auto; }
-    .preview-table { border-collapse: collapse; width: 100%; font-size: 12px; }
-    .preview-table th { background: #333; color: white; padding: 4px 2px; text-align: center; border: 1px solid #555; font-size: 9px; min-width: 35px; }
-    .preview-table td { padding: 3px 2px; border: 1px solid #ddd; text-align: center; vertical-align: middle; height: 35px; }
-    .preview-table .section-cell { background: #f0f0f0; font-weight: bold; text-align: left; padding-left: 10px; min-width: 80px; position: sticky; left: 0; z-index: 1; }
+    .modal-close { float: right; background: none; border: none; font-size: 20px; cursor: pointer; color: #aaa; }
+
+    /* Form */
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; font-weight: bold; }
+    select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; }
+    textarea { height: 70px; resize: none; }
+    .save-btn { width: 100%; padding: 14px; background: #06C755; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+    .save-btn:disabled { background: #aaa; }
+    .del-btn { width: 100%; padding: 12px; background: none; border: 1px solid #ef9a9a; border-radius: 10px; font-size: 14px; color: #c62828; cursor: pointer; margin-top: 6px; }
+    .status { margin-top: 10px; padding: 10px; border-radius: 5px; text-align: center; display: none; }
+    .status.success { background: #e0ffe0; color: green; display: block; }
+    .status.error { background: #ffe0e0; color: red; display: block; }
+
+    /* 募集枠カード */
+    .recruit-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+    .recruit-card .section-name { font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+    .recruit-card .time-info { color: #555; font-size: 13px; margin-bottom: 6px; }
+    .recruit-card .slots { font-size: 12px; color: #888; margin-bottom: 8px; }
+    .apply-btn { width: 100%; padding: 10px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
+    .applied-badge { width: 100%; padding: 10px; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; font-size: 14px; color: #2e7d32; text-align: center; font-weight: bold; }
+
+    /* 自分のシフト */
+    .shift-card { background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 12px; }
+    .shift-date { text-align: center; min-width: 45px; }
+    .shift-date .date-num { font-size: 22px; font-weight: bold; color: #06C755; }
+    .shift-date .date-day { font-size: 11px; color: #888; }
+    .shift-info { flex: 1; }
+    .shift-section { font-weight: bold; font-size: 14px; margin-bottom: 3px; }
+    .shift-time { font-size: 13px; color: #555; }
+
+    /* 全体シフト横バー */
+    .allshift-container { overflow-x: auto; margin-top: 5px; }
+    .allshift-table { border-collapse: collapse; font-size: 11px; }
+    .allshift-table th { background: #333; color: white; padding: 4px 2px; text-align: center; border: 1px solid #555; white-space: nowrap; }
+    .allshift-table td { padding: 2px; border: 1px solid #eee; vertical-align: middle; height: 30px; }
+    .allshift-table .name-cell { background: #f5f5f5; font-weight: bold; padding: 4px 6px; white-space: nowrap; min-width: 55px; position: sticky; left: 0; z-index: 1; font-size: 11px; }
+    .allshift-table .section-header { background: #e8f5e9; font-weight: bold; padding: 4px 6px; position: sticky; left: 0; z-index: 1; font-size: 11px; color: #2e7d32; }
+    .shift-bar { background: #06C755; height: 20px; border-radius: 3px; }
     .empty-cell { background: #fafafa; }
+    .total-row td { background: #f0f0f0; text-align: center; font-size: 10px; font-weight: bold; color: #333; }
 
-    /* 募集管理 */
-    .recruit-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-    .date-card { background: white; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); overflow: hidden; }
-    .date-card-title { background: #f0f0f0; padding: 10px 15px; font-weight: bold; font-size: 14px; color: #333; }
-    .shift-bar-container { overflow-x: auto; padding: 10px; }
-    .shift-bar-table { border-collapse: collapse; font-size: 11px; }
-    .shift-bar-table th { background: #333; color: white; padding: 3px 2px; text-align: center; border: 1px solid #555; white-space: nowrap; }
-    .shift-bar-table td { padding: 2px; border: 1px solid #eee; vertical-align: middle; height: 28px; }
-    .shift-bar-table .section-col { background: #f5f5f5; font-weight: bold; padding: 3px 6px; white-space: nowrap; min-width: 60px; position: sticky; left: 0; z-index: 1; font-size: 11px; cursor: pointer; }
-    .shift-bar-table .section-col:hover { background: #e0f7e9; }
-    .bar-cell { cursor: pointer; }
-    .bar-cell:hover { opacity: 0.8; }
-    .status-badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; }
-    .status-募集中 { background: #e3f2fd; color: #1565c0; }
-    .status-確定 { background: #e8f5e9; color: #2e7d32; }
-    .status-empty { background: #f5f5f5; color: #888; }
-
-    /* 応募者モーダル */
-    .applicant-card { background: #f9f9f9; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-    .applicant-name { font-weight: bold; font-size: 15px; margin-bottom: 5px; }
-    .applicant-time { font-size: 12px; color: #888; margin-bottom: 8px; }
-    .btn-approve { flex: 1; padding: 8px; background: #06C755; color: white; border: none; border-radius: 5px; font-size: 13px; font-weight: bold; cursor: pointer; }
-    .btn-reject { flex: 1; padding: 8px; background: #ff4444; color: white; border: none; border-radius: 5px; font-size: 13px; font-weight: bold; cursor: pointer; }
-    .btn-approved { width: 100%; padding: 8px; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 5px; color: #2e7d32; font-size: 13px; text-align: center; font-weight: bold; }
-    .btn-rejected { width: 100%; padding: 8px; background: #fff0f0; border: 1px solid #ef9a9a; border-radius: 5px; color: #c62828; font-size: 13px; text-align: center; font-weight: bold; }
-    .shift-status-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; margin-top: 10px; }
+    .section-title { font-size: 14px; font-weight: bold; color: #555; margin: 15px 0 8px; }
+    .empty-msg { text-align: center; color: #aaa; padding: 30px 20px; font-size: 14px; }
   </style>
 </head>
 <body>
 
-<div class="header">🏪 シフト管理（管理者）</div>
-<div id="initStatus">初期化中...</div>
-
-<!-- メインメニュー -->
-<div id="menuScreen" class="screen">
-  <div class="menu">
-    <button class="menu-btn" onclick="showScreen('storeScreen')">
-      <span class="icon">🏪</span>
-      <div><div class="title">店舗情報設定</div><div class="desc">営業時間・定休日・セクションを設定</div></div>
-    </button>
-    <button class="menu-btn" onclick="showScreen('settingsScreen')">
-      <span class="icon">⚙️</span>
-      <div><div class="title">シフト設定</div><div class="desc">締切・提出期限・通知タイミングを設定</div></div>
-    </button>
-    <button class="menu-btn" onclick="showScreen('shiftScreen')">
-      <span class="icon">📅</span>
-      <div><div class="title">シフト枠設定</div><div class="desc">テンプレート設定・カレンダーで日付ごとに管理</div></div>
-    </button>
-    <button class="menu-btn" onclick="showScreen('staffScreen')">
-      <span class="icon">👥</span>
-      <div><div class="title">スタッフ管理</div><div class="desc">スタッフ一覧・権限変更</div></div>
-    </button>
-    <button class="menu-btn" onclick="showScreen('recruitScreen')">
-      <span class="icon">📢</span>
-      <div><div class="title">募集管理</div><div class="desc">応募者確認・承認・却下</div></div>
-    </button>
-  </div>
-</div>
-
-<!-- 店舗情報設定 -->
-<div id="storeScreen" class="screen">
-  <button class="back-btn" onclick="showScreen('menuScreen')">← 戻る</button>
-  <h3 style="margin-bottom:20px">🏪 店舗情報設定</h3>
-  <div class="form-group">
-    <label>店舗名</label>
-    <input type="text" id="storeName" placeholder="例: テスト店舗">
-  </div>
-  <div class="form-group">
-    <label>営業開始時間</label>
-    <select id="openTime"></select>
-  </div>
-  <div class="form-group">
-    <label>営業終了時間</label>
-    <select id="closeTime"></select>
-  </div>
-  <div class="form-group">
-    <label>定休日</label>
-    <select id="holiday">
-      <option value="">なし</option>
-      <option value="月曜日">月曜日</option>
-      <option value="火曜日">火曜日</option>
-      <option value="水曜日">水曜日</option>
-      <option value="木曜日">木曜日</option>
-      <option value="金曜日">金曜日</option>
-      <option value="土曜日">土曜日</option>
-      <option value="日曜日">日曜日</option>
-    </select>
-  </div>
-  <div class="form-group">
-    <label>セクション（任意）</label>
-    <div class="tag-input" id="sectionTags"></div>
-    <div class="tag-add">
-      <input type="text" id="sectionInput" placeholder="例: ホール">
-      <button onclick="addSection()">追加</button>
+<div id="initStatus">
+  <div style="text-align:center; color:#888; padding:20px;">読み込み中...</div>
+  <div style="padding:0 15px;">
+    <div class="skeleton" style="height:20px; width:120px; margin:0 auto 15px;"></div>
+    <div class="skeleton-cal">
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
+      <div class="skeleton skeleton-cell"></div>
     </div>
   </div>
-  <button class="save-btn" id="storeSaveBtn" onclick="saveStore()">保存する</button>
-  <div class="status" id="storeStatus"></div>
 </div>
 
-<!-- シフト設定 -->
-<div id="settingsScreen" class="screen">
-  <button class="back-btn" onclick="showScreen('menuScreen')">← 戻る</button>
-  <h3 style="margin-bottom:20px">⚙️ シフト設定</h3>
-  <div class="form-group">
-    <label>締切サイクル</label>
-    <select id="cycle">
-      <option value="1ヶ月">1ヶ月</option>
-      <option value="15日">15日刻み</option>
-    </select>
+<!-- 希望提出タブ -->
+<div id="availScreen" class="screen">
+  <div class="calendar-header">
+    <button class="cal-nav" onclick="changeAvailMonth(-1)">◀</button>
+    <span id="availCalTitle" style="font-size:16px; font-weight:bold;"></span>
+    <button class="cal-nav" onclick="changeAvailMonth(1)">▶</button>
   </div>
-  <div class="form-group">
-    <label>締切日（毎月何日）</label>
-    <select id="deadline"></select>
-  </div>
-  <div class="form-group">
-    <label>提出期限（毎月何日）</label>
-    <select id="submitDeadline"></select>
-  </div>
-  <div class="form-group">
-    <label>通知タイミング（締切何日前）</label>
-    <select id="notifyTiming">
-      <option value="1">1日前</option>
-      <option value="2">2日前</option>
-      <option value="3">3日前</option>
-      <option value="5">5日前</option>
-      <option value="7">7日前</option>
-    </select>
-  </div>
-  <button class="save-btn" id="settingsSaveBtn" onclick="saveSettings()">保存する</button>
-  <div class="status" id="settingsStatus"></div>
+  <div style="font-size:11px; color:#888; margin-bottom:8px;">🟩 提出済み　タップで入力・編集</div>
+  <div class="calendar-grid" id="availDayHeaders"></div>
+  <div class="calendar-grid" id="availCalGrid" style="margin-top:3px;"></div>
 </div>
 
-<!-- シフト枠設定 -->
-<div id="shiftScreen" class="screen">
-  <button class="back-btn" onclick="showScreen('menuScreen')">← 戻る</button>
-  <h3 style="margin-bottom:15px">📅 シフト枠設定</h3>
-  <div class="main-tab-bar">
-    <button class="main-tab-btn active" onclick="switchMainTab('template')">📋 テンプレート</button>
-    <button class="main-tab-btn inactive" onclick="switchMainTab('calendar')">📅 カレンダー</button>
-  </div>
-  <div id="templateTab">
-    <div id="templateLoading" style="text-align:center; color:#888; padding:20px;">読み込み中...</div>
-    <div id="templateContent" style="display:none;">
-      <div class="tab-bar" id="dayTypeTabs"></div>
-      <div id="shiftSections"></div>
-      <button class="preview-btn" onclick="showPreview()">👁️ プレビューを確認</button>
-      <button class="save-btn" id="shiftSaveBtn" onclick="saveShiftTemplate()">テンプレートを保存</button>
-      <div class="status" id="shiftStatus"></div>
-      <div id="previewArea" style="display:none; margin-top:20px;">
-        <h4 style="margin-bottom:10px;">📊 シフト表プレビュー（<span id="previewDayType"></span>）</h4>
-        <div class="preview-container">
-          <table class="preview-table" id="previewTable"></table>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div id="calendarTab" style="display:none;">
-    <div class="calendar-header">
-      <button class="cal-nav" onclick="changeMonth(-1)">◀</button>
-      <span id="calTitle" style="font-size:16px; font-weight:bold;"></span>
-      <button class="cal-nav" onclick="changeMonth(1)">▶</button>
-    </div>
-    <div style="font-size:11px; color:#888; margin-bottom:10px;">🟦 上書き済み　🟩 テンプレート適用　⬜ 休み</div>
-    <div class="calendar-grid" id="calendarDayHeaders"></div>
-    <div class="calendar-grid" id="calendarGrid" style="margin-top:3px;"></div>
-    <div class="status" id="calStatus"></div>
-  </div>
-</div>
-
-<!-- スタッフ管理 -->
-<div id="staffScreen" class="screen">
-  <button class="back-btn" onclick="showScreen('menuScreen')">← 戻る</button>
-  <h3 style="margin-bottom:15px">👥 スタッフ管理</h3>
-  <div id="staffLoading" style="text-align:center; color:#888; padding:20px;">読み込み中...</div>
-  <div id="staffContent" style="display:none;">
-    <div style="background:white; border-radius:10px; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-      <div style="font-weight:bold; margin-bottom:10px;">➕ 新規スタッフ発行</div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="newStaffName" placeholder="スタッフ名を入力" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-        <select id="newStaffRole" style="width:auto; padding:10px; border:1px solid #ddd; border-radius:5px; font-size:14px;">
-          <option value="staff">スタッフ</option>
-          <option value="admin">管理者</option>
-        </select>
-      </div>
-      <button onclick="issueStaffId()" style="width:100%; margin-top:10px; padding:12px; background:#06C755; color:white; border:none; border-radius:8px; font-size:15px; font-weight:bold; cursor:pointer;">🎫 IDを発行する</button>
-      <div class="status" id="addStaffStatus"></div>
-      <div id="issuedResult" style="display:none; margin-top:10px; background:#e8f5e9; border-radius:8px; padding:12px; text-align:center;">
-        <div style="font-size:12px; color:#555; margin-bottom:4px;">発行されたスタッフID</div>
-        <div id="issuedId" style="font-size:22px; font-weight:bold; color:#06C755; letter-spacing:2px;"></div>
-        <div style="font-size:12px; color:#888; margin-top:4px;">このIDをスタッフに伝えてください</div>
-      </div>
-    </div>
-    <input type="text" id="staffSearch" placeholder="🔍 名前・スタッフIDで検索" oninput="filterStaff()" style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:8px; width:100%; font-size:14px;">
-    <div id="staffList"></div>
-  </div>
-</div>
-
-<!-- 募集管理 -->
+<!-- 募集シフトタブ -->
 <div id="recruitScreen" class="screen">
-  <button class="back-btn" onclick="showScreen('menuScreen')">← 戻る</button>
-  <h3 style="margin-bottom:15px">📢 募集管理</h3>
-  <div id="recruitLoading" style="text-align:center; color:#888; padding:20px;">読み込み中...</div>
-  <div id="recruitContent" style="display:none;">
-    <div class="recruit-header">
-      <button class="cal-nav" onclick="changeRecruitMonth(-1)">◀</button>
-      <span id="recruitMonthTitle" style="font-size:16px; font-weight:bold;"></span>
-      <button class="cal-nav" onclick="changeRecruitMonth(1)">▶</button>
-    </div>
-    <div style="font-size:11px; color:#888; margin-bottom:12px;">
-      セクション行をタップ → ステータス変更・応募者確認
-    </div>
-    <div id="recruitList"></div>
+  <div class="calendar-header">
+    <button class="cal-nav" onclick="changeRecruitMonth(-1)">◀</button>
+    <span id="recruitCalTitle" style="font-size:16px; font-weight:bold;"></span>
+    <button class="cal-nav" onclick="changeRecruitMonth(1)">▶</button>
   </div>
+  <div style="font-size:11px; color:#888; margin-bottom:8px;">🟦 募集あり　🟧 応募済み</div>
+  <div class="calendar-grid" id="recruitDayHeaders"></div>
+  <div class="calendar-grid" id="recruitCalGrid" style="margin-top:3px;"></div>
 </div>
 
-<!-- カレンダー日付上書きモーダル -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
-<div class="modal" id="dateModal">
-  <div class="modal-title" id="modalTitle"></div>
-  <div id="modalContent"></div>
-  <button class="save-btn" id="modalSaveBtn" onclick="saveOverride()">この日を保存</button>
-  <button style="width:100%; padding:12px; background:none; border:1px solid #ddd; border-radius:10px; margin-top:8px; cursor:pointer; color:#e00;" onclick="resetOverride()">テンプレートに戻す</button>
-  <button style="width:100%; padding:12px; background:none; border:1px solid #ddd; border-radius:10px; margin-top:8px; cursor:pointer;" onclick="closeModal()">キャンセル</button>
-  <div class="status" id="modalStatus"></div>
+<!-- 自分のシフトタブ -->
+<div id="myShiftScreen" class="screen">
+  <div class="calendar-header">
+    <button class="cal-nav" onclick="changeMyShiftMonth(-1)">◀</button>
+    <span id="myShiftCalTitle" style="font-size:16px; font-weight:bold;"></span>
+    <button class="cal-nav" onclick="changeMyShiftMonth(1)">▶</button>
+  </div>
+  <div id="myShiftList"></div>
 </div>
 
-<!-- 応募者モーダル -->
-<div class="modal-overlay" id="applicantOverlay" onclick="closeApplicantModal()"></div>
-<div class="modal" id="applicantModal">
-  <button style="float:right; background:none; border:none; font-size:20px; cursor:pointer; color:#aaa;" onclick="closeApplicantModal()">✕</button>
-  <div class="modal-title" id="applicantModalTitle"></div>
-  <div style="margin-bottom:12px;">
-    <label style="font-size:13px;">ステータス変更</label>
-    <select id="shiftStatusSelect" class="shift-status-select" onchange="changeShiftStatus(this.value)">
-      <option value="">（未設定）</option>
-      <option value="募集中">募集中</option>
-      <option value="確定">確定</option>
-      <option value="キャンセル">キャンセル</option>
-    </select>
+<!-- 全体シフトタブ -->
+<div id="allShiftScreen" class="screen">
+  <div class="calendar-header">
+    <button class="cal-nav" onclick="changeAllShiftDate(-1)">◀</button>
+    <span id="allShiftTitle" style="font-size:15px; font-weight:bold;"></span>
+    <button class="cal-nav" onclick="changeAllShiftDate(1)">▶</button>
   </div>
-  <div id="applicantList"></div>
-  <div class="status" id="applicantStatus"></div>
+  <div style="font-size:11px; color:#888; margin-bottom:8px;">確定シフトのみ表示</div>
+  <div id="allShiftContent"></div>
+</div>
+
+<!-- Bottom Tab -->
+<div class="bottom-tab" id="bottomTab" style="display:none;">
+  <button class="tab-btn" id="tabAvail" onclick="switchTab('avail')">
+    <span class="tab-icon">📅</span>希望提出
+  </button>
+  <button class="tab-btn" id="tabRecruit" onclick="switchTab('recruit')">
+    <span class="tab-icon">🔍</span>募集
+  </button>
+  <button class="tab-btn" id="tabMyShift" onclick="switchTab('myshift')">
+    <span class="tab-icon">👤</span>自分
+  </button>
+  <button class="tab-btn" id="tabAllShift" onclick="switchTab('allshift')">
+    <span class="tab-icon">📋</span>全体
+  </button>
+</div>
+
+<!-- 希望提出モーダル -->
+<div class="modal-overlay" id="availOverlay" onclick="closeAvailModal()"></div>
+<div class="modal" id="availModal">
+  <button class="modal-close" onclick="closeAvailModal()">✕</button>
+  <div class="modal-title" id="availModalTitle"></div>
+  <div id="availModalContent"></div>
+  <div class="status" id="availModalStatus"></div>
+</div>
+
+<!-- 募集シフトモーダル -->
+<div class="modal-overlay" id="recruitOverlay" onclick="closeRecruitModal()"></div>
+<div class="modal" id="recruitModal">
+  <button class="modal-close" onclick="closeRecruitModal()">✕</button>
+  <div class="modal-title" id="recruitModalTitle"></div>
+  <div id="recruitModalContent"></div>
 </div>
 
 <script>
-  const MY_LIFF_ID = "2009335817-RHdXW8FZ";
+  // キャッシュ
+const availCache = {};
+const recruitCache = {};
+const applicationCache = {};
+const myShiftCache = {};
+
+function setCache(cache, key, data, ttl = 5 * 60 * 1000) {
+  cache[key] = { data, timestamp: Date.now(), ttl };
+}
+
+function getCache(cache, key) {
+  const entry = cache[key];
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > entry.ttl) return null;
+  return entry.data;
+}
+  const MY_LIFF_ID = "2009335817-NPTGb4xl";
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwHFgzr7x-Ax-_qZzztekA75Aset0tQgb0_0tJ140eEt5zO-a-0HE6oOljTMTY1Wo9Y/exec";
 
   let userProfile = null;
   let storeId = null;
-  let sections = [];
+  let staffName = '';
+  let uid = null;
 
-  const DAY_TYPES = ['月', '火', '水', '木', '金', '土', '日', '祝日'];
-  const JS_DAY_MAP = ['日', '月', '火', '水', '木', '金', '土'];
+  const JS_DAY_MAP = ['日','月','火','水','木','金','土'];
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
-  let currentDayType = '月';
-  let shiftTemplateData = {};
-  DAY_TYPES.forEach(d => shiftTemplateData[d] = {});
+  // カレンダー状態
+  let availYear = today.getFullYear();
+  let availMonth = today.getMonth() + 1;
+  let availData = {};
 
-  let calYear = new Date().getFullYear();
-  let calMonth = new Date().getMonth() + 2;
-  if (calMonth > 12) { calMonth = 1; calYear++; }
-  let holidays = {};
-  let overrides = {};
-  let modalDate = null;
-  let modalEntries = [];
+  let recruitYear = today.getFullYear();
+  let recruitMonth = today.getMonth() + 1;
+  let recruitData = {};
+  let myApplications = {};
 
-  let staffList = [];
+  let myShiftYear = today.getFullYear();
+  let myShiftMonth = today.getMonth() + 1;
+  let myShiftData = [];
 
-  // 募集管理
-  let recruitYear = new Date().getFullYear();
-  let recruitMonth = new Date().getMonth() + 1;
-  let recruitShifts = [];
-  let recruitApplications = [];
-  let currentShift = null;
+  let allShiftDate = new Date(today);
+  let allShiftCache = {};
+
+  // ===== GAS呼び出し =====
 
   async function callGAS(params) {
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(params) });
     return await res.json();
-  }
-
-  function generateTimeOptions(selectId) {
-    const select = document.getElementById(selectId);
-    for (let h = 0; h < 24; h++) {
-      for (let m of [0, 30]) {
-        const time = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-        const opt = document.createElement('option');
-        opt.value = time; opt.text = time;
-        select.appendChild(opt);
-      }
-    }
-  }
-
-  function generateDayOptions(selectId) {
-    const select = document.getElementById(selectId);
-    for (let d = 1; d <= 31; d++) {
-      const opt = document.createElement('option');
-      opt.value = d; opt.text = `${d}日`;
-      select.appendChild(opt);
-    }
   }
 
   function generateTimeOptionsHTML(selected) {
@@ -380,818 +283,604 @@
     return html;
   }
 
-  async function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+  // ===== sessionStorageキャッシュ =====
 
-    if (id === 'shiftScreen') {
-      document.getElementById('templateLoading').style.display = 'block';
-      document.getElementById('templateContent').style.display = 'none';
-      try { await loadShiftTemplate(); } catch(err) { console.error(err); }
-      renderDayTypeTabs();
-      renderShiftSections();
-      document.getElementById('templateLoading').style.display = 'none';
-      document.getElementById('templateContent').style.display = 'block';
-    }
-
-    if (id === 'staffScreen') {
-      document.getElementById('staffLoading').style.display = 'block';
-      document.getElementById('staffContent').style.display = 'none';
-      try { await loadStaffList(); } catch(err) { console.error(err); }
-      document.getElementById('staffLoading').style.display = 'none';
-      document.getElementById('staffContent').style.display = 'block';
-    }
-
-    if (id === 'recruitScreen') {
-      document.getElementById('recruitLoading').style.display = 'block';
-      document.getElementById('recruitContent').style.display = 'none';
-      try { await loadRecruitData(); } catch(err) { console.error(err); }
-      document.getElementById('recruitLoading').style.display = 'none';
-      document.getElementById('recruitContent').style.display = 'block';
-    }
+  function saveCache(key, data) {
+    try { sessionStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
   }
 
-  // ===== 店舗情報 =====
-
-  function addSection() {
-    const input = document.getElementById('sectionInput');
-    const val = input.value.trim();
-    if (!val || sections.includes(val)) { input.value = ''; return; }
-    sections.push(val);
-    renderSections();
-    input.value = '';
-  }
-
-  function removeSection(name) {
-    sections = sections.filter(s => s !== name);
-    renderSections();
-  }
-
-  function renderSections() {
-    const container = document.getElementById('sectionTags');
-    container.innerHTML = sections.map(s =>
-      `<span class="tag">${s}<span class="tag-del" onclick="removeSection('${s}')">×</span></span>`
-    ).join('');
-  }
-
-  async function saveStore() {
-    const btn = document.getElementById('storeSaveBtn');
-    const status = document.getElementById('storeStatus');
-    btn.disabled = true;
+  function loadCache(key) {
     try {
-      const result = await callGAS({
-        action: 'saveStore', storeId,
-        storeName: document.getElementById('storeName').value.trim(),
-        openTime: document.getElementById('openTime').value,
-        closeTime: document.getElementById('closeTime').value,
-        holiday: document.getElementById('holiday').value,
-        sections: sections.join(',')
-      });
-      status.className = result.success ? 'status success' : 'status error';
-      status.innerText = result.success ? '✅ 保存しました！' : '❌ ' + result.msg;
-    } catch (err) {
-      status.className = 'status error';
-      status.innerText = '❌ エラー: ' + err.message;
-    } finally { btn.disabled = false; }
-  }
-
-  // ===== シフト設定 =====
-
-  async function saveSettings() {
-    const btn = document.getElementById('settingsSaveBtn');
-    const status = document.getElementById('settingsStatus');
-    btn.disabled = true;
-    try {
-      const result = await callGAS({
-        action: 'saveSettings', storeId,
-        cycle: document.getElementById('cycle').value,
-        deadline: document.getElementById('deadline').value,
-        submitDeadline: document.getElementById('submitDeadline').value,
-        notifyTiming: document.getElementById('notifyTiming').value
-      });
-      status.className = result.success ? 'status success' : 'status error';
-      status.innerText = result.success ? '✅ 保存しました！' : '❌ ' + result.msg;
-    } catch (err) {
-      status.className = 'status error';
-      status.innerText = '❌ エラー: ' + err.message;
-    } finally { btn.disabled = false; }
-  }
-
-  // ===== シフト枠テンプレート =====
-
-  function renderDayTypeTabs() {
-    const container = document.getElementById('dayTypeTabs');
-    container.innerHTML = DAY_TYPES.map(d =>
-      `<button class="tab-btn ${d === currentDayType ? 'active' : 'inactive'}" onclick="switchDayType('${d}')">${d}</button>`
-    ).join('');
-  }
-
-  function switchDayType(dayType) {
-    currentDayType = dayType;
-    renderDayTypeTabs();
-    document.getElementById('previewArea').style.display = 'none';
-    renderShiftSections();
-  }
-
-  function renderShiftSections() {
-    const container = document.getElementById('shiftSections');
-    const sectionList = sections.length > 0 ? sections : ['（セクションなし）'];
-    container.innerHTML = sectionList.map(section => {
-      const frames = shiftTemplateData[currentDayType][section] || [];
-      return `
-        <div style="background:white; border-radius:10px; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-          <div style="font-weight:bold; margin-bottom:10px; color:#333;">📌 ${section}</div>
-          <div id="frames_${currentDayType}_${section}">
-            ${frames.map((f, idx) => renderFrame(section, idx, f)).join('')}
-          </div>
-          <button onclick="addFrame('${section}')" style="width:100%; padding:8px; border:2px dashed #06C755; background:none; color:#06C755; border-radius:5px; cursor:pointer; margin-top:5px;">＋ 枠を追加</button>
-        </div>`;
-    }).join('');
-  }
-
-  function renderFrame(section, idx, frame) {
-    const startVal = frame ? frame.startTime : '10:00';
-    const endVal = frame ? frame.endTime : '18:00';
-    const numVal = frame ? frame.requiredNum : 1;
-    return `
-      <div style="display:flex; align-items:center; gap:5px; margin-bottom:8px; flex-wrap:wrap;">
-        <select onchange="updateFrame('${section}', ${idx}, 'startTime', this.value)" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px; font-size:14px;">${generateTimeOptionsHTML(startVal)}</select>
-        <span>〜</span>
-        <select onchange="updateFrame('${section}', ${idx}, 'endTime', this.value)" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px; font-size:14px;">${generateTimeOptionsHTML(endVal)}</select>
-        <input type="number" min="1" max="20" value="${numVal}" onchange="updateFrame('${section}', ${idx}, 'requiredNum', this.value)" style="width:55px; padding:8px; border:1px solid #ddd; border-radius:5px; text-align:center;">
-        <span style="color:#888; font-size:12px;">人</span>
-        <button onclick="removeFrame('${section}', ${idx})" style="background:#ff4444; color:white; border:none; border-radius:5px; padding:8px 10px; cursor:pointer;">🗑️</button>
-      </div>`;
-  }
-
-  function addFrame(section) {
-    if (!shiftTemplateData[currentDayType][section]) shiftTemplateData[currentDayType][section] = [];
-    shiftTemplateData[currentDayType][section].push({ startTime: '10:00', endTime: '18:00', requiredNum: 1 });
-    renderShiftSections();
-  }
-
-  function removeFrame(section, idx) {
-    shiftTemplateData[currentDayType][section].splice(idx, 1);
-    renderShiftSections();
-  }
-
-  function updateFrame(section, idx, key, value) {
-    if (!shiftTemplateData[currentDayType][section]) return;
-    shiftTemplateData[currentDayType][section][idx][key] = value;
-  }
-
-  async function loadShiftTemplate() {
-    const result = await callGAS({ action: 'getShiftTemplate', storeId });
-    if (result.success) {
-      DAY_TYPES.forEach(d => shiftTemplateData[d] = {});
-      for (const entry of result.data) {
-        if (!shiftTemplateData[entry.dayType]) shiftTemplateData[entry.dayType] = {};
-        if (!shiftTemplateData[entry.dayType][entry.section]) shiftTemplateData[entry.dayType][entry.section] = [];
-        shiftTemplateData[entry.dayType][entry.section].push({ startTime: entry.startTime, endTime: entry.endTime, requiredNum: entry.requiredNum });
-      }
-    }
-  }
-
-  async function saveShiftTemplate() {
-    const btn = document.getElementById('shiftSaveBtn');
-    const status = document.getElementById('shiftStatus');
-    btn.disabled = true;
-    const entries = [];
-    const sectionList = sections.length > 0 ? sections : ['（セクションなし）'];
-    for (const dayType of DAY_TYPES) {
-      for (const section of sectionList) {
-        for (const frame of (shiftTemplateData[dayType][section] || [])) {
-          entries.push({ dayType, section, startTime: frame.startTime, endTime: frame.endTime, requiredNum: frame.requiredNum });
-        }
-      }
-    }
-    try {
-      const result = await callGAS({ action: 'saveShiftTemplate', storeId, entries });
-      status.className = result.success ? 'status success' : 'status error';
-      status.innerText = result.success ? '✅ 保存しました！' : '❌ ' + result.msg;
-    } catch (err) {
-      status.className = 'status error';
-      status.innerText = '❌ エラー: ' + err.message;
-    } finally { btn.disabled = false; }
-  }
-
-  function showPreview() {
-    const sectionList = sections.length > 0 ? sections : ['（セクションなし）'];
-    const frames = shiftTemplateData[currentDayType];
-    const allTimes = [];
-    for (let h = 0; h < 24; h++) {
-      for (let m of [0, 30]) allTimes.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
-    }
-    let minTime = '23:30', maxTime = '00:00';
-    for (const section of sectionList) {
-      for (const f of (frames[section] || [])) {
-        if (f.startTime < minTime) minTime = f.startTime;
-        if (f.endTime > maxTime) maxTime = f.endTime;
-      }
-    }
-    if (minTime === '23:30' && maxTime === '00:00') { alert('枠が設定されていません'); return; }
-    const slots = allTimes.filter(t => t >= minTime && t < maxTime);
-    let html = '<tr><th style="min-width:60px; position:sticky; left:0; z-index:2; background:#333; font-size:10px;">セクション</th>';
-    for (const t of slots) {
-      const isHour = t.endsWith(':00');
-      html += `<th style="min-width:${isHour?'38px':'30px'}; font-size:${isHour?'10px':'8px'}; color:${isHour?'white':'#aaa'}; padding:4px 1px;">${isHour ? t : t.slice(3)}</th>`;
-    }
-    html += '</tr>';
-    for (const section of sectionList) {
-      html += `<tr><td class="section-cell" style="position:sticky; left:0; z-index:1; font-size:11px; padding:4px 6px;">${section}</td>`;
-      let skipCount = 0;
-      for (let si = 0; si < slots.length; si++) {
-        if (skipCount > 0) { skipCount--; continue; }
-        const slot = slots[si];
-        const slotEnd = allTimes[allTimes.indexOf(slot) + 1];
-        const matching = (frames[section] || []).find(f => f.startTime <= slot && f.endTime >= slotEnd);
-        if (matching && matching.startTime === slot) {
-          const startIdx = slots.indexOf(matching.startTime);
-          let endIdx = slots.indexOf(matching.endTime);
-          if (endIdx < 0) endIdx = slots.length;
-          const span = endIdx - startIdx;
-          skipCount = span - 1;
-          const num = parseInt(matching.requiredNum);
-          const colors = ['#06C755','#05a847','#048a3b','#037a34','#026a2d'];
-          const bars = Array(num).fill(0).map((_, i) =>
-            `<div style="background:${colors[i % colors.length]}; height:10px; border-radius:2px; margin:1px 0; width:100%;"></div>`
-          ).join('');
-          html += `<td colspan="${span}" style="padding:3px 4px; border:1px solid #ddd; vertical-align:middle; background:#f0fff4;">
-            <div style="font-size:9px; color:#333; text-align:center; margin-bottom:1px; font-weight:bold;">${matching.startTime}〜${matching.endTime}</div>
-            ${bars}
-            <div style="font-size:9px; color:#06C755; text-align:center; margin-top:1px; font-weight:bold;">${num}人</div>
-          </td>`;
-        } else if (!matching) {
-          html += `<td class="empty-cell"></td>`;
-        }
-      }
-      html += '</tr>';
-    }
-    document.getElementById('previewTable').innerHTML = html;
-    document.getElementById('previewDayType').innerText = currentDayType;
-    document.getElementById('previewArea').style.display = 'block';
-    document.getElementById('previewArea').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // ===== カレンダー =====
-
-  function switchMainTab(tab) {
-    document.querySelectorAll('.main-tab-btn').forEach((b, i) => {
-      b.className = 'main-tab-btn ' + (['template','calendar'][i] === tab ? 'active' : 'inactive');
-    });
-    document.getElementById('templateTab').style.display = tab === 'template' ? 'block' : 'none';
-    document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
-    if (tab === 'calendar') renderCalendar();
-  }
-
-  async function changeMonth(delta) {
-    calMonth += delta;
-    if (calMonth > 12) { calMonth = 1; calYear++; }
-    if (calMonth < 1) { calMonth = 12; calYear--; }
-    await loadCalendarData();
-    renderCalendar();
-  }
-
-  async function loadCalendarData() {
-    const hResult = await callGAS({ action: 'getHolidays', year: calYear, month: calMonth });
-    holidays = {};
-    if (hResult.success) {
-      for (const h of hResult.holidays) holidays[h.date] = h.title;
-    }
-    const yearMonth = `${calYear}-${String(calMonth).padStart(2,'0')}`;
-    const oResult = await callGAS({ action: 'getShiftOverrides', storeId, yearMonth });
-    overrides = {};
-    if (oResult.success) {
-      for (const o of oResult.data) {
-        if (!overrides[o.date]) overrides[o.date] = [];
-        overrides[o.date].push({ section: o.section, startTime: o.startTime, endTime: o.endTime, requiredNum: o.requiredNum });
-      }
-    }
-  }
-
-  function getTemplateForDate(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    if (holidays[dateStr]) return shiftTemplateData['祝日'];
-    const dayName = JS_DAY_MAP[d.getDay()];
-    return shiftTemplateData[dayName] || {};
-  }
-
-  function hasShift(template) {
-    if (!template) return false;
-    return Object.values(template).some(frames => frames && frames.length > 0);
-  }
-
-  function renderCalendar() {
-    document.getElementById('calTitle').innerText = `${calYear}年${calMonth}月`;
-    const headers = ['日','月','火','水','木','金','土'];
-    document.getElementById('calendarDayHeaders').innerHTML = headers.map((h, i) =>
-      `<div class="cal-header-cell ${i===0?'sun':i===6?'sat':''}">${h}</div>`
-    ).join('');
-    const firstDay = new Date(calYear, calMonth - 1, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth, 0).getDate();
-    let html = '';
-    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const dayOfWeek = new Date(calYear, calMonth - 1, d).getDay();
-      const isHoliday = !!holidays[dateStr];
-      const isOverridden = !!overrides[dateStr];
-      const template = getTemplateForDate(dateStr);
-      const hasS = hasShift(template);
-      const dayClass = `cal-day ${isHoliday ? 'holiday' : ''} ${isOverridden ? 'overridden' : ''}`;
-      const numClass = `day-num ${dayOfWeek===0||isHoliday ? 'hol' : dayOfWeek===6 ? 'sat' : ''}`;
-      const holLabel = isHoliday ? `<div style="font-size:8px; color:#e00; margin-top:1px;">${holidays[dateStr]}</div>` : '';
-      const badge = isOverridden
-        ? `<div class="day-badge override">上書き</div>`
-        : hasS ? `<div class="day-badge">テンプレ</div>`
-        : `<div class="day-badge noshift">休み</div>`;
-      html += `<div class="${dayClass}" onclick="openModal('${dateStr}')"><div class="${numClass}">${d}</div>${holLabel}${badge}</div>`;
-    }
-    document.getElementById('calendarGrid').innerHTML = html;
-  }
-
-  function openModal(dateStr) {
-    modalDate = dateStr;
-    const d = new Date(dateStr + 'T00:00:00');
-    const dayName = JS_DAY_MAP[d.getDay()];
-    const isHoliday = !!holidays[dateStr];
-    const holName = isHoliday ? `（${holidays[dateStr]}）` : '';
-    document.getElementById('modalTitle').innerText = `${dateStr}（${dayName}）${holName}`;
-    if (overrides[dateStr]) {
-      modalEntries = JSON.parse(JSON.stringify(overrides[dateStr]));
-    } else {
-      const template = getTemplateForDate(dateStr);
-      modalEntries = [];
-      const sectionList = sections.length > 0 ? sections : ['（セクションなし）'];
-      for (const section of sectionList) {
-        for (const frame of (template[section] || [])) {
-          modalEntries.push({ section, startTime: frame.startTime, endTime: frame.endTime, requiredNum: frame.requiredNum });
-        }
-      }
-    }
-    renderModalContent();
-    document.getElementById('modalOverlay').style.display = 'block';
-    document.getElementById('dateModal').style.display = 'block';
-    document.getElementById('modalStatus').className = 'status';
-    document.getElementById('modalStatus').style.display = 'none';
-  }
-
-  function renderModalContent() {
-    const sectionList = sections.length > 0 ? sections : ['（セクションなし）'];
-    let html = '';
-    for (const section of sectionList) {
-      const sectionEntries = modalEntries.filter(e => e.section === section);
-      html += `
-        <div style="background:#f5f5f5; border-radius:8px; padding:12px; margin-bottom:10px;">
-          <div style="font-weight:bold; margin-bottom:8px;">📌 ${section}</div>
-          <div id="modalFrames_${section}">${sectionEntries.map((e, idx) => renderModalFrame(section, idx, e)).join('')}</div>
-          <button onclick="addModalFrame('${section}')" style="width:100%; padding:6px; border:2px dashed #06C755; background:none; color:#06C755; border-radius:5px; cursor:pointer; margin-top:5px; font-size:13px;">＋ 枠を追加</button>
-        </div>`;
-    }
-    document.getElementById('modalContent').innerHTML = html;
-  }
-
-  function renderModalFrame(section, idx, frame) {
-    return `
-      <div style="display:flex; align-items:center; gap:4px; margin-bottom:6px; flex-wrap:wrap;">
-        <select onchange="updateModalFrame('${section}', ${idx}, 'startTime', this.value)" style="flex:1; padding:6px; border:1px solid #ddd; border-radius:5px; font-size:13px;">${generateTimeOptionsHTML(frame.startTime)}</select>
-        <span>〜</span>
-        <select onchange="updateModalFrame('${section}', ${idx}, 'endTime', this.value)" style="flex:1; padding:6px; border:1px solid #ddd; border-radius:5px; font-size:13px;">${generateTimeOptionsHTML(frame.endTime)}</select>
-        <input type="number" min="1" max="20" value="${frame.requiredNum}" onchange="updateModalFrame('${section}', ${idx}, 'requiredNum', this.value)" style="width:50px; padding:6px; border:1px solid #ddd; border-radius:5px; text-align:center;">
-        <span style="color:#888; font-size:11px;">人</span>
-        <button onclick="removeModalFrame('${section}', ${idx})" style="background:#ff4444; color:white; border:none; border-radius:5px; padding:6px 8px; cursor:pointer;">🗑️</button>
-      </div>`;
-  }
-
-  function addModalFrame(section) {
-    modalEntries.push({ section, startTime: '10:00', endTime: '18:00', requiredNum: 1 });
-    renderModalContent();
-  }
-
-  function removeModalFrame(section, idx) {
-    const sectionEntries = modalEntries.filter(e => e.section === section);
-    const target = sectionEntries[idx];
-    const globalIdx = modalEntries.indexOf(target);
-    if (globalIdx >= 0) modalEntries.splice(globalIdx, 1);
-    renderModalContent();
-  }
-
-  function updateModalFrame(section, idx, key, value) {
-    const sectionEntries = modalEntries.filter(e => e.section === section);
-    const target = sectionEntries[idx];
-    if (target) target[key] = value;
-  }
-
-  function closeModal() {
-    document.getElementById('modalOverlay').style.display = 'none';
-    document.getElementById('dateModal').style.display = 'none';
-    modalDate = null;
-    modalEntries = [];
-  }
-
-  async function saveOverride() {
-    const btn = document.getElementById('modalSaveBtn');
-    const status = document.getElementById('modalStatus');
-    btn.disabled = true;
-    try {
-      const result = await callGAS({ action: 'saveShiftOverride', storeId, date: modalDate, entries: modalEntries });
-      if (result.success) {
-        overrides[modalDate] = [...modalEntries];
-        status.className = 'status success';
-        status.innerText = '✅ 保存しました！';
-        setTimeout(() => { closeModal(); renderCalendar(); }, 800);
-      } else {
-        status.className = 'status error';
-        status.innerText = '❌ ' + result.msg;
-      }
-    } catch (err) {
-      status.className = 'status error';
-      status.innerText = '❌ エラー: ' + err.message;
-    } finally { btn.disabled = false; }
-  }
-
-  async function resetOverride() {
-    const status = document.getElementById('modalStatus');
-    try {
-      const result = await callGAS({ action: 'saveShiftOverride', storeId, date: modalDate, entries: [] });
-      if (result.success) {
-        delete overrides[modalDate];
-        status.className = 'status success';
-        status.innerText = '✅ テンプレートに戻しました！';
-        setTimeout(() => { closeModal(); renderCalendar(); }, 800);
-      }
-    } catch (err) {
-      status.className = 'status error';
-      status.innerText = '❌ エラー: ' + err.message;
-    }
-  }
-
-  // ===== スタッフ管理 =====
-
-  async function loadStaffList() {
-    const result = await callGAS({ action: 'getStaffList', storeId });
-    if (result.success) {
-      staffList = result.data;
-      renderStaffList(staffList);
-    }
-  }
-
-  function filterStaff() {
-    const q = document.getElementById('staffSearch').value.trim().toLowerCase();
-    const filtered = staffList.filter(s =>
-      s.name.toLowerCase().includes(q) || s.staffId.toLowerCase().includes(q)
-    );
-    renderStaffList(filtered);
-  }
-
-  function renderStaffList(list) {
-    const container = document.getElementById('staffList');
-    if (list.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">スタッフが登録されていません</p>';
-      return;
-    }
-    container.innerHTML = list.map(s => `
-      <div style="background:white; border-radius:10px; padding:15px; margin-bottom:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <div>
-            <div style="font-weight:bold; font-size:15px;">${s.name}</div>
-            <div style="font-size:12px; color:#888; margin-top:2px;">${s.staffId}</div>
-            <div style="font-size:11px; margin-top:3px;">
-              ${s.lineId ? '<span style="color:#06C755;">✅ LINE登録済み</span>' : '<span style="color:#aaa;">⬜ 未登録</span>'}
-            </div>
-          </div>
-          <select onchange="changeRole('${s.staffId}', this.value)" style="width:auto; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px; background:${s.role === 'admin' ? '#fff3e0' : '#f0fff4'};">
-            <option value="staff" ${s.role === 'staff' ? 'selected' : ''}>スタッフ</option>
-            <option value="admin" ${s.role === 'admin' ? 'selected' : ''}>管理者</option>
-          </select>
-        </div>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button onclick="resetLine('${s.staffId}', '${s.name}')" style="flex:1; padding:8px; background:#fff3e0; border:1px solid #ffb74d; border-radius:5px; color:#e65100; font-size:12px; cursor:pointer;">🔄 LINE再登録</button>
-          <button onclick="removeStaff('${s.staffId}', '${s.name}')" style="flex:1; padding:8px; background:#fff0f0; border:1px solid #ef9a9a; border-radius:5px; color:#c62828; font-size:12px; cursor:pointer;">🗑️ 削除</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  async function issueStaffId() {
-    const name = document.getElementById('newStaffName').value.trim();
-    const role = document.getElementById('newStaffRole').value;
-    const status = document.getElementById('addStaffStatus');
-    if (!name) { status.className = 'status error'; status.innerText = '❌ スタッフ名を入力してください'; return; }
-    try {
-      const result = await callGAS({ action: 'addStaff', storeId, name, role });
-      if (result.success) {
-        document.getElementById('issuedId').innerText = result.staffId;
-        document.getElementById('issuedResult').style.display = 'block';
-        status.className = 'status success';
-        status.innerText = `✅ ${name} さんを登録しました`;
-        staffList.push({ storeId, staffId: result.staffId, role, lineId: '', name });
-        renderStaffList(staffList);
-        document.getElementById('newStaffName').value = '';
-      } else {
-        status.className = 'status error';
-        status.innerText = '❌ ' + result.msg;
-      }
-    } catch (err) { status.className = 'status error'; status.innerText = '❌ エラー: ' + err.message; }
-  }
-
-  async function changeRole(staffId, role) {
-    try {
-      const result = await callGAS({ action: 'updateStaffRole', storeId, staffId, role });
-      if (!result.success) alert('❌ ' + result.msg);
-      else { const s = staffList.find(s => s.staffId === staffId); if (s) s.role = role; }
-    } catch (err) { alert('❌ エラー: ' + err.message); }
-  }
-
-  async function resetLine(staffId, name) {
-    if (!confirm(`${name} のLINE IDをリセットしますか？`)) return;
-    try {
-      const result = await callGAS({ action: 'resetLineId', storeId, staffId });
-      if (result.success) {
-        const s = staffList.find(s => s.staffId === staffId);
-        if (s) s.lineId = '';
-        renderStaffList(staffList);
-        alert('✅ リセットしました');
-      } else { alert('❌ ' + result.msg); }
-    } catch (err) { alert('❌ エラー: ' + err.message); }
-  }
-
-  async function removeStaff(staffId, name) {
-    if (!confirm(`${name} を削除しますか？`)) return;
-    try {
-      const result = await callGAS({ action: 'deleteStaff', storeId, staffId });
-      if (result.success) {
-        staffList = staffList.filter(s => s.staffId !== staffId);
-        renderStaffList(staffList);
-      } else { alert('❌ ' + result.msg); }
-    } catch (err) { alert('❌ エラー: ' + err.message); }
-  }
-
-  // ===== 募集管理 =====
-
-  async function loadRecruitData() {
-    const yearMonth = `${recruitYear}-${String(recruitMonth).padStart(2,'0')}`;
-    document.getElementById('recruitMonthTitle').innerText = `${recruitYear}年${recruitMonth}月`;
-    const result = await callGAS({ action: 'getShiftsByMonth', storeId, yearMonth });
-    if (result.success) {
-      recruitShifts = result.shifts;
-      recruitApplications = result.applications;
-      renderRecruitList();
-    }
-  }
-
-  async function changeRecruitMonth(delta) {
-    recruitMonth += delta;
-    if (recruitMonth > 12) { recruitMonth = 1; recruitYear++; }
-    if (recruitMonth < 1) { recruitMonth = 12; recruitYear--; }
-    await loadRecruitData();
-  }
-
-  function renderRecruitList() {
-    const container = document.getElementById('recruitList');
-    if (recruitShifts.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">シフトデータがありません</p>';
-      return;
-    }
-
-    // 日付ごとにまとめる
-    const byDate = {};
-    for (const s of recruitShifts) {
-      if (!byDate[s.date]) byDate[s.date] = [];
-      byDate[s.date].push(s);
-    }
-
-    // 時間スロットを計算
-    const allTimes = [];
-    for (let h = 0; h < 24; h++) {
-      for (let m of [0, 30]) allTimes.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
-    }
-
-    let html = '';
-    for (const [date, shifts] of Object.entries(byDate).sort()) {
-      const d = new Date(date + 'T00:00:00');
-      const dow = JS_DAY_MAP[d.getDay()];
-
-      let minTime = '23:30', maxTime = '00:00';
-      for (const s of shifts) {
-        if (s.startTime < minTime) minTime = s.startTime;
-        if (s.endTime > maxTime) maxTime = s.endTime;
-      }
-      const slots = allTimes.filter(t => t >= minTime && t < maxTime);
-
-      let tableHtml = '<div class="shift-bar-container"><table class="shift-bar-table"><thead><tr>';
-      tableHtml += `<th style="min-width:65px; position:sticky; left:0; z-index:2; background:#333;">セクション</th>`;
-      for (const t of slots) {
-        const isHour = t.endsWith(':00');
-        tableHtml += `<th style="min-width:${isHour?'34px':'26px'}; font-size:${isHour?'10px':'8px'}; color:${isHour?'white':'#aaa'};">${isHour ? t : t.slice(3)}</th>`;
-      }
-      tableHtml += '</tr></thead><tbody>';
-
-      for (const s of shifts) {
-        const appCount = recruitApplications.filter(a =>
-          a.date === s.date && a.section === s.section && a.startTime === s.startTime
-        ).length;
-        const pendingCount = recruitApplications.filter(a =>
-          a.date === s.date && a.section === s.section && a.startTime === s.startTime && a.status === 'pending'
-        ).length;
-
-        const statusClass = s.status === '募集中' ? 'status-募集中' : s.status === '確定' ? 'status-確定' : 'status-empty';
-        const statusLabel = s.status || '未設定';
-        const confirmed = s.confirmedStaff ? s.confirmedStaff.split(',').filter(n => n.trim()).length : 0;
-
-        tableHtml += `<tr>
-          <td class="section-col" onclick="openApplicantModal('${s.date}','${s.section}','${s.startTime}','${s.endTime}',${s.requiredNum},'${s.status || ''}')">
-            <div style="font-size:11px; font-weight:bold; margin-bottom:2px;">${s.section}</div>
-            <span class="status-badge ${statusClass}">${statusLabel}</span>
-            ${pendingCount > 0 ? `<div style="font-size:9px; color:#e65100; margin-top:2px;">応募${pendingCount}件</div>` : ''}
-            <div style="font-size:9px; color:#888; margin-top:1px;">${confirmed}/${s.requiredNum}人</div>
-          </td>`;
-
-        let skipCount = 0;
-        for (let si = 0; si < slots.length; si++) {
-          if (skipCount > 0) { skipCount--; continue; }
-          const slot = slots[si];
-          const slotEnd = allTimes[allTimes.indexOf(slot) + 1];
-          if (s.startTime <= slot && slotEnd && s.endTime >= slotEnd && s.startTime === slot) {
-            const startIdx = slots.indexOf(s.startTime);
-            let endIdx = slots.indexOf(s.endTime);
-            if (endIdx < 0) endIdx = slots.length;
-            const span = endIdx - startIdx;
-            skipCount = span - 1;
-            const barColor = s.status === '確定' ? '#06C755' : s.status === '募集中' ? '#007AFF' : '#ccc';
-            tableHtml += `<td colspan="${span}" class="bar-cell" onclick="openApplicantModal('${s.date}','${s.section}','${s.startTime}','${s.endTime}',${s.requiredNum},'${s.status || ''}')" style="padding:3px;">
-              <div style="background:${barColor}; height:20px; border-radius:3px; opacity:0.85;"></div>
-            </td>`;
-          } else if (s.startTime > slot || s.endTime <= slot) {
-            tableHtml += `<td class="empty-cell"></td>`;
-          }
-        }
-        tableHtml += '</tr>';
-      }
-      tableHtml += '</tbody></table></div>';
-
-      html += `
-        <div class="date-card">
-          <div class="date-card-title">${date}（${dow}）</div>
-          ${tableHtml}
-        </div>`;
-    }
-    container.innerHTML = html;
-  }
-
-  function openApplicantModal(date, section, startTime, endTime, requiredNum, currentStatus) {
-    currentShift = { date, section, startTime, endTime, requiredNum };
-    document.getElementById('applicantModalTitle').innerText = `${date} ${section} ${startTime}〜${endTime}`;
-    document.getElementById('shiftStatusSelect').value = currentStatus;
-    document.getElementById('applicantStatus').className = 'status';
-
-    const apps = recruitApplications.filter(a =>
-      a.date === date && a.section === section && a.startTime === startTime
-    );
-
-    let html = '';
-    if (apps.length === 0) {
-      html = '<p style="text-align:center; color:#888; padding:15px;">応募者はいません</p>';
-    } else {
-      html = `<div style="font-weight:bold; font-size:13px; margin-bottom:10px; color:#555;">応募者一覧 (${apps.length}名)</div>`;
-      apps.forEach(a => {
-        let actionHtml = '';
-        if (a.status === 'approved') {
-          actionHtml = `<div class="btn-approved">✅ 承認済み</div>`;
-        } else if (a.status === 'rejected') {
-          actionHtml = `<div class="btn-rejected">❌ 却下済み</div>`;
-        } else {
-          actionHtml = `
-            <div style="display:flex; gap:8px;">
-              <button class="btn-approve" onclick="updateAppStatus(${a.row}, 'approved', '${a.name}', '${date}', '${section}', '${startTime}', ${requiredNum})">✅ 承認</button>
-              <button class="btn-reject" onclick="updateAppStatus(${a.row}, 'rejected', '${a.name}', '${date}', '${section}', '${startTime}', ${requiredNum})">❌ 却下</button>
-            </div>`;
-        }
-        html += `
-          <div class="applicant-card">
-            <div class="applicant-name">${a.name}</div>
-            <div class="applicant-time">応募日時: ${a.appliedAt ? String(a.appliedAt).slice(0, 16) : '-'}</div>
-            ${actionHtml}
-          </div>`;
-      });
-    }
-
-    document.getElementById('applicantList').innerHTML = html;
-    document.getElementById('applicantOverlay').style.display = 'block';
-    document.getElementById('applicantModal').style.display = 'block';
-  }
-
-  async function changeShiftStatus(newStatus) {
-    if (!currentShift) return;
-    const status = document.getElementById('applicantStatus');
-    try {
-      const result = await callGAS({
-        action: 'updateShiftStatus',
-        storeId,
-        date: currentShift.date,
-        section: currentShift.section,
-        startTime: currentShift.startTime,
-        status: newStatus
-      });
-      if (result.success) {
-        // ローカルデータ更新
-        const s = recruitShifts.find(s =>
-          s.date === currentShift.date && s.section === currentShift.section && s.startTime === currentShift.startTime
-        );
-        if (s) s.status = newStatus;
-        status.className = 'status success';
-        status.innerText = '✅ ステータスを更新しました';
-        renderRecruitList();
-      } else {
-        status.className = 'status error';
-        status.innerText = '❌ ' + result.msg;
-      }
-    } catch (err) {
-      status.className = 'status error';
-      status.innerText = '❌ エラー: ' + err.message;
-    }
-  }
-
-  async function updateAppStatus(row, appStatus, name, date, section, startTime, requiredNum) {
-    const status = document.getElementById('applicantStatus');
-    try {
-      const result = await callGAS({
-        action: 'updateApplicationStatus',
-        storeId, row, status: appStatus, name, date, section, startTime
-      });
-      if (result.success) {
-        // ローカルデータ更新
-        const a = recruitApplications.find(a => a.row === row);
-        if (a) a.status = appStatus;
-        // 承認時にShiftsのローカルデータも更新
-        if (appStatus === 'approved') {
-          const s = recruitShifts.find(s => s.date === date && s.section === section && s.startTime === startTime);
-          if (s) {
-            const current = s.confirmedStaff ? s.confirmedStaff.split(',').filter(n => n.trim()) : [];
-            if (!current.includes(name)) current.push(name);
-            s.confirmedStaff = current.join(',');
-            if (current.length >= parseInt(requiredNum)) s.status = '確定';
-          }
-        }
-        if (appStatus === 'rejected') {
-          const s = recruitShifts.find(s => s.date === date && s.section === section && s.startTime === startTime);
-          if (s && s.confirmedStaff) {
-            s.confirmedStaff = s.confirmedStaff.split(',').filter(n => n.trim() && n.trim() !== name).join(',');
-          }
-        }
-        status.className = 'status success';
-        status.innerText = appStatus === 'approved' ? '✅ 承認しました' : '❌ 却下しました';
-        openApplicantModal(date, section, startTime, currentShift.endTime, requiredNum, document.getElementById('shiftStatusSelect').value);
-        renderRecruitList();
-      } else {
-        status.className = 'status error';
-        status.innerText = '❌ ' + result.msg;
-      }
-    } catch (err) {
-      status.className = 'status error';
-      status.innerText = '❌ エラー: ' + err.message;
-    }
-  }
-
-  function closeApplicantModal() {
-    document.getElementById('applicantOverlay').style.display = 'none';
-    document.getElementById('applicantModal').style.display = 'none';
-    currentShift = null;
+      const d = sessionStorage.getItem(key);
+      return d ? JSON.parse(d) : null;
+    } catch(e) { return null; }
   }
 
   // ===== 初期化 =====
 
   window.onload = async function() {
-    generateTimeOptions('openTime');
-    generateTimeOptions('closeTime');
-    generateDayOptions('deadline');
-    generateDayOptions('submitDeadline');
-
-    const status = document.getElementById('initStatus');
+    const statusEl = document.getElementById('initStatus');
     try {
       await liff.init({ liffId: MY_LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
       userProfile = await liff.getProfile();
+      uid = userProfile.userId;
 
-      const result = await callGAS({ action: 'checkAdmin', uid: userProfile.userId });
-      if (!result.success) { status.innerText = '❌ 管理者権限がありません'; return; }
-
-      storeId = result.storeId;
-      status.style.display = 'none';
-      showScreen('menuScreen');
-
-      if (result.storeData) {
-        document.getElementById('storeName').value = result.storeData.name || '';
-        document.getElementById('openTime').value = result.storeData.openTime || '';
-        document.getElementById('closeTime').value = result.storeData.closeTime || '';
-        document.getElementById('holiday').value = result.storeData.holiday || '';
-        sections = result.storeData.sections ? result.storeData.sections.split(',').filter(s => s) : [];
-        renderSections();
+      // キャッシュからスタッフ情報を取得
+      const cachedStaff = loadCache('staffInfo_' + uid);
+      if (cachedStaff) {
+        storeId = cachedStaff.storeId;
+        staffName = cachedStaff.name;
       }
+
+      // 今月のyearMonth
+      const yearMonth = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+
+      // 一括取得（1リクエスト）
+      const result = await callGAS({ action: 'getInitialData', uid, yearMonth });
+      if (!result.success) {
+        statusEl.innerText = '❌ ' + result.msg;
+        return;
+      }
+
+      // データをセット
+      storeId = result.staffInfo.storeId;
+      staffName = result.staffInfo.name;
+      saveCache('staffInfo_' + uid, result.staffInfo);
+
+      // 希望提出データ
+      availData = {};
+      for (const d of result.availability) {
+        if (!availData[d.date]) availData[d.date] = [];
+        availData[d.date].push({ startTime: d.startTime, endTime: d.endTime, note: d.note });
+      }
+
+      // 募集データ
+      recruitData = {};
+      for (const d of result.recruitments) {
+        if (!recruitData[d.date]) recruitData[d.date] = [];
+        recruitData[d.date].push(d);
+      }
+
+      // 応募データ
+      myApplications = {};
+      for (const a of result.myApplications) {
+        const key = `${a.date}_${a.section}_${a.startTime}`;
+        myApplications[key] = a.status;
+      }
+
+      // 自分のシフト
+      myShiftData = result.myShifts || [];
+
+      // 画面表示
+      statusEl.style.display = 'none';
+      document.getElementById('bottomTab').style.display = 'flex';
+
+      // URLパラメータでタブを決定
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab') || 'avail';
+      switchTab(tabParam);
+
     } catch (err) {
-      status.innerText = '❌ エラー: ' + err.message;
+      statusEl.innerText = '❌ エラー: ' + err.message;
     }
   };
+
+  // ===== タブ切り替え =====
+
+  function switchTab(tab) {
+    ['avail','recruit','myshift','allshift'].forEach(t => {
+      document.getElementById(t === 'avail' ? 'availScreen' :
+        t === 'recruit' ? 'recruitScreen' :
+        t === 'myshift' ? 'myShiftScreen' : 'allShiftScreen').classList.remove('active');
+      document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)
+        .replace('shift','Shift').replace('hift','hift')).classList.remove('active');
+    });
+
+    const screenMap = { avail:'availScreen', recruit:'recruitScreen', myshift:'myShiftScreen', allshift:'allShiftScreen' };
+    const tabMap = { avail:'tabAvail', recruit:'tabRecruit', myshift:'tabMyShift', allshift:'tabAllShift' };
+
+    document.getElementById(screenMap[tab]).classList.add('active');
+    document.getElementById(tabMap[tab]).classList.add('active');
+
+    if (tab === 'avail') renderAvailCalendar();
+    else if (tab === 'recruit') renderRecruitCalendar();
+    else if (tab === 'myshift') renderMyShifts();
+    else if (tab === 'allshift') renderAllShift();
+  }
+
+  // ===== 希望提出カレンダー =====
+
+  async function loadAvailCalendar() {
+    const yearMonth = `${availYear}-${String(availMonth).padStart(2,'0')}`;
+    const result = await callGAS({ action: 'getAvailability', storeId, uid, yearMonth });
+    availData = {};
+    if (result.success) {
+      for (const d of result.data) {
+        if (!availData[d.date]) availData[d.date] = [];
+        availData[d.date].push({ startTime: d.startTime, endTime: d.endTime, note: d.note });
+      }
+    }
+    renderAvailCalendar();
+  }
+
+  async function changeAvailMonth(delta) {
+    availMonth += delta;
+    if (availMonth > 12) { availMonth = 1; availYear++; }
+    if (availMonth < 1) { availMonth = 12; availYear--; }
+
+    const yearMonth = `${availYear}-${String(availMonth).padStart(2,'0')}`;
+    const cached = getCache(availCache, yearMonth);
+    if (cached) { availData = cached; renderAvailCalendar(); return; }
+
+    const result = await callGAS({ action: 'getAvailability', storeId, uid, yearMonth });
+    availData = {};
+    if (result.success) {
+      for (const d of result.data) {
+        if (!availData[d.date]) availData[d.date] = [];
+        availData[d.date].push({ startTime: d.startTime, endTime: d.endTime, note: d.note });
+      }
+    }
+    setCache(availCache, yearMonth, availData, 10 * 60 * 1000);
+    renderAvailCalendar();
+  }
+  
+  function renderAvailCalendar() {
+    document.getElementById('availCalTitle').innerText = `${availYear}年${availMonth}月`;
+    const headers = ['日','月','火','水','木','金','土'];
+    document.getElementById('availDayHeaders').innerHTML = headers.map((h, i) =>
+      `<div class="cal-header-cell ${i===0?'sun':i===6?'sat':''}">${h}</div>`
+    ).join('');
+
+    const firstDay = new Date(availYear, availMonth - 1, 1).getDay();
+    const daysInMonth = new Date(availYear, availMonth, 0).getDate();
+    let html = '';
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${availYear}-${String(availMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dow = new Date(availYear, availMonth - 1, d).getDay();
+      const isToday = dateStr === todayStr;
+      const hasData = !!availData[dateStr];
+      const numClass = `day-num ${dow===0?'sun':dow===6?'sat':''}`;
+      html += `
+        <div class="cal-day ${isToday?'today':''}" onclick="openAvailModal('${dateStr}')">
+          <div class="${numClass}">${d}</div>
+          ${hasData ? `<div class="day-badge submitted">提出済</div>` : ''}
+        </div>`;
+    }
+    document.getElementById('availCalGrid').innerHTML = html;
+  }
+
+  function openAvailModal(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const dayName = JS_DAY_MAP[d.getDay()];
+    document.getElementById('availModalTitle').innerText = `${dateStr}（${dayName}）`;
+    document.getElementById('availModalStatus').className = 'status';
+    const existing = availData[dateStr] || [];
+    renderAvailModalContent(dateStr, existing);
+    document.getElementById('availOverlay').style.display = 'block';
+    document.getElementById('availModal').style.display = 'block';
+  }
+
+  function renderAvailModalContent(dateStr, entries) {
+    let html = '';
+    if (entries.length > 0) {
+      html += `<div class="section-title">現在の提出内容</div>`;
+      entries.forEach((e, idx) => {
+        html += `
+          <div style="background:#f5f5f5; border-radius:8px; padding:12px; margin-bottom:8px;">
+            <div class="form-group">
+              <label>開始時間</label>
+              <select id="edit_start_${idx}">${generateTimeOptionsHTML(e.startTime)}</select>
+            </div>
+            <div class="form-group">
+              <label>終了時間</label>
+              <select id="edit_end_${idx}">${generateTimeOptionsHTML(e.endTime)}</select>
+            </div>
+            <div class="form-group">
+              <label>備考</label>
+              <textarea id="edit_note_${idx}" placeholder="備考（任意）">${e.note || ''}</textarea>
+            </div>
+          </div>`;
+      });
+      html += `<button class="save-btn" onclick="saveAvail('${dateStr}', ${entries.length})">更新する</button>`;
+      html += `<button class="del-btn" onclick="deleteAvail('${dateStr}')">🗑️ この日の希望を削除</button>`;
+    } else {
+      html += `
+        <div class="section-title">希望時間を入力</div>
+        <div style="background:#f5f5f5; border-radius:8px; padding:12px;">
+          <div class="form-group">
+            <label>開始時間</label>
+            <select id="new_start">${generateTimeOptionsHTML('10:00')}</select>
+          </div>
+          <div class="form-group">
+            <label>終了時間</label>
+            <select id="new_end">${generateTimeOptionsHTML('18:00')}</select>
+          </div>
+          <div class="form-group">
+            <label>備考</label>
+            <textarea id="new_note" placeholder="備考（任意）"></textarea>
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveAvailNew('${dateStr}')">提出する</button>`;
+    }
+    document.getElementById('availModalContent').innerHTML = html;
+  }
+
+  async function saveAvailNew(dateStr) {
+    const startTime = document.getElementById('new_start').value;
+    const endTime = document.getElementById('new_end').value;
+    const note = document.getElementById('new_note').value.trim();
+    const status = document.getElementById('availModalStatus');
+    if (startTime >= endTime) {
+      status.className = 'status error';
+      status.innerText = '❌ 終了時間は開始時間より後にしてください';
+      return;
+    }
+    const result = await callGAS({ action: 'saveAvailability', storeId, uid, date: dateStr, entries: [{ startTime, endTime, note }] });
+    if (result.success) {
+      availData[dateStr] = [{ startTime, endTime, note }];
+      status.className = 'status success';
+      status.innerText = '✅ 提出しました！';
+      setTimeout(() => { closeAvailModal(); renderAvailCalendar(); }, 700);
+    } else {
+      status.className = 'status error';
+      status.innerText = '❌ ' + result.msg;
+    }
+  }
+
+  async function saveAvail(dateStr, count) {
+    const entries = [];
+    for (let i = 0; i < count; i++) {
+      entries.push({
+        startTime: document.getElementById(`edit_start_${i}`).value,
+        endTime: document.getElementById(`edit_end_${i}`).value,
+        note: document.getElementById(`edit_note_${i}`).value.trim()
+      });
+    }
+    const status = document.getElementById('availModalStatus');
+    const result = await callGAS({ action: 'saveAvailability', storeId, uid, date: dateStr, entries });
+    if (result.success) {
+      availData[dateStr] = entries;
+      status.className = 'status success';
+      status.innerText = '✅ 更新しました！';
+      setTimeout(() => { closeAvailModal(); renderAvailCalendar(); }, 700);
+    } else {
+      status.className = 'status error';
+      status.innerText = '❌ ' + result.msg;
+    }
+  }
+
+  async function deleteAvail(dateStr) {
+    if (!confirm('この日の希望を削除しますか？')) return;
+    const result = await callGAS({ action: 'saveAvailability', storeId, uid, date: dateStr, entries: [] });
+    if (result.success) {
+      delete availData[dateStr];
+      closeAvailModal();
+      renderAvailCalendar();
+    }
+  }
+
+  function closeAvailModal() {
+    document.getElementById('availOverlay').style.display = 'none';
+    document.getElementById('availModal').style.display = 'none';
+  }
+
+  // ===== 募集シフトカレンダー =====
+
+  async function loadRecruitCalendar() {
+    const yearMonth = `${recruitYear}-${String(recruitMonth).padStart(2,'0')}`;
+    const [rResult, aResult] = await Promise.all([
+      callGAS({ action: 'getRecruitments', storeId, yearMonth }),
+      callGAS({ action: 'getMyApplications', storeId, uid, yearMonth })
+    ]);
+    recruitData = {};
+    if (rResult.success) {
+      for (const d of rResult.data) {
+        if (!recruitData[d.date]) recruitData[d.date] = [];
+        recruitData[d.date].push(d);
+      }
+    }
+    myApplications = {};
+    if (aResult.success) {
+      for (const a of aResult.data) {
+        myApplications[`${a.date}_${a.section}_${a.startTime}`] = a.status;
+      }
+    }
+    renderRecruitCalendar();
+  }
+
+async function changeRecruitMonth(delta) {
+  recruitMonth += delta;
+  if (recruitMonth > 12) { recruitMonth = 1; recruitYear++; }
+  if (recruitMonth < 1) { recruitMonth = 12; recruitYear--; }
+
+  const yearMonth = `${recruitYear}-${String(recruitMonth).padStart(2,'0')}`;
+  const cachedR = getCache(recruitCache, yearMonth);
+  const cachedA = getCache(applicationCache, yearMonth);
+
+  if (cachedR && cachedA) {
+    recruitData = cachedR;
+    myApplications = cachedA;
+    renderRecruitCalendar();
+    return;
+  }
+
+  const [rResult, aResult] = await Promise.all([
+    callGAS({ action: 'getRecruitments', storeId, yearMonth }),
+    callGAS({ action: 'getMyApplications', storeId, uid, yearMonth })
+  ]);
+
+  recruitData = {};
+  if (rResult.success) {
+    for (const d of rResult.data) {
+      if (!recruitData[d.date]) recruitData[d.date] = [];
+      recruitData[d.date].push(d);
+    }
+  }
+  setCache(recruitCache, yearMonth, recruitData, 3 * 60 * 1000); // 3分
+
+  myApplications = {};
+  if (aResult.success) {
+    for (const a of aResult.data) {
+      myApplications[`${a.date}_${a.section}_${a.startTime}`] = a.status;
+    }
+  }
+  setCache(applicationCache, yearMonth, myApplications, 3 * 60 * 1000); // 3分
+
+  renderRecruitCalendar();
+}
+
+  function renderRecruitCalendar() {
+    document.getElementById('recruitCalTitle').innerText = `${recruitYear}年${recruitMonth}月`;
+    const headers = ['日','月','火','水','木','金','土'];
+    document.getElementById('recruitDayHeaders').innerHTML = headers.map((h, i) =>
+      `<div class="cal-header-cell ${i===0?'sun':i===6?'sat':''}">${h}</div>`
+    ).join('');
+
+    const firstDay = new Date(recruitYear, recruitMonth - 1, 1).getDay();
+    const daysInMonth = new Date(recruitYear, recruitMonth, 0).getDate();
+    let html = '';
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${recruitYear}-${String(recruitMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dow = new Date(recruitYear, recruitMonth - 1, d).getDay();
+      const isToday = dateStr === todayStr;
+      const hasRecruit = !!recruitData[dateStr];
+      const hasApplied = hasRecruit && recruitData[dateStr].some(r => !!myApplications[`${dateStr}_${r.section}_${r.startTime}`]);
+      const numClass = `day-num ${dow===0?'sun':dow===6?'sat':''}`;
+      let badge = '';
+      if (hasApplied) badge = `<div class="day-badge applied">応募済</div>`;
+      else if (hasRecruit) badge = `<div class="day-badge recruit">募集中</div>`;
+
+      html += `
+        <div class="cal-day ${isToday?'today':''}" onclick="${hasRecruit?`openRecruitModal('${dateStr}')`:''}" style="${!hasRecruit?'cursor:default;':''}">
+          <div class="${numClass}">${d}</div>
+          ${badge}
+        </div>`;
+    }
+    document.getElementById('recruitCalGrid').innerHTML = html;
+  }
+
+  function openRecruitModal(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const dayName = JS_DAY_MAP[d.getDay()];
+    document.getElementById('recruitModalTitle').innerText = `${dateStr}（${dayName}）募集枠`;
+    const slots = recruitData[dateStr] || [];
+    let html = '';
+    if (slots.length === 0) {
+      html = '<div class="empty-msg">募集枠がありません</div>';
+    } else {
+      slots.forEach(s => {
+        const key = `${dateStr}_${s.section}_${s.startTime}`;
+        const appStatus = myApplications[key];
+        const confirmed = parseInt(s.confirmedStaff) || 0;
+        const remaining = parseInt(s.requiredNum) - confirmed;
+        let actionHtml = '';
+        if (appStatus === 'approved') {
+          actionHtml = `<div class="applied-badge">✅ 承認済み</div>`;
+        } else if (appStatus === 'pending') {
+          actionHtml = `<div class="applied-badge" style="background:#fff3e0; border-color:#ffb74d; color:#e65100;">⏳ 審査中</div>`;
+        } else if (appStatus === 'rejected') {
+          actionHtml = `<div class="applied-badge" style="background:#fff0f0; border-color:#ef9a9a; color:#c62828;">❌ 不承認</div>`;
+        } else {
+          actionHtml = `<button class="apply-btn" onclick="applyShift('${dateStr}','${s.section}','${s.startTime}','${s.endTime}',this)">応募する</button>`;
+        }
+        html += `
+          <div class="recruit-card">
+            <div class="section-name">📌 ${s.section}</div>
+            <div class="time-info">🕐 ${s.startTime} 〜 ${s.endTime}</div>
+            <div class="slots">残り ${remaining}枠 / ${s.requiredNum}枠${s.note ? `　📝 ${s.note}` : ''}</div>
+            ${actionHtml}
+          </div>`;
+      });
+    }
+    document.getElementById('recruitModalContent').innerHTML = html;
+    document.getElementById('recruitOverlay').style.display = 'block';
+    document.getElementById('recruitModal').style.display = 'block';
+  }
+
+  async function applyShift(dateStr, section, startTime, endTime, btn) {
+    btn.disabled = true;
+    btn.innerText = '送信中...';
+    const result = await callGAS({ action: 'applyShift', storeId, uid, name: staffName, date: dateStr, section, startTime, endTime });
+    if (result.success) {
+      myApplications[`${dateStr}_${section}_${startTime}`] = 'pending';
+      btn.outerHTML = `<div class="applied-badge" style="background:#fff3e0; border-color:#ffb74d; color:#e65100;">⏳ 審査中</div>`;
+      renderRecruitCalendar();
+    } else {
+      btn.disabled = false;
+      btn.innerText = '応募する';
+      alert('❌ ' + result.msg);
+    }
+  }
+
+  function closeRecruitModal() {
+    document.getElementById('recruitOverlay').style.display = 'none';
+    document.getElementById('recruitModal').style.display = 'none';
+  }
+async function changeMyShiftMonth(delta) {
+  myShiftMonth += delta;
+  if (myShiftMonth > 12) { myShiftMonth = 1; myShiftYear++; }
+  if (myShiftMonth < 1) { myShiftMonth = 12; myShiftYear--; }
+
+  const yearMonth = `${myShiftYear}-${String(myShiftMonth).padStart(2,'0')}`;
+  const cached = getCache(myShiftCache, yearMonth);
+  if (cached) { myShiftData = cached; renderMyShifts(); return; }
+
+  const result = await callGAS({ action: 'getMyShifts', storeId, uid, yearMonth });
+  if (result.success) {
+    myShiftData = result.data;
+    setCache(myShiftCache, yearMonth, myShiftData, 10 * 60 * 1000);
+  }
+  renderMyShifts();
+}
+
+  function renderMyShifts() {
+    document.getElementById('myShiftCalTitle').innerText = `${myShiftYear}年${myShiftMonth}月`;
+    const yearMonth = `${myShiftYear}-${String(myShiftMonth).padStart(2,'0')}`;
+    const filtered = myShiftData.filter(s => String(s.date).slice(0, 7) === yearMonth);
+    const container = document.getElementById('myShiftList');
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-msg">確定シフトはありません</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(s => {
+      const d = new Date(s.date + 'T00:00:00');
+      const dow = JS_DAY_MAP[d.getDay()];
+      const dayNum = d.getDate();
+      const isToday = s.date === todayStr;
+      return `
+        <div class="shift-card" style="${isToday ? 'border-left: 4px solid #06C755;' : ''}">
+          <div class="shift-date">
+            <div class="date-num" style="${d.getDay()===0?'color:#e00':d.getDay()===6?'color:#00e':'color:#06C755'}">${dayNum}</div>
+            <div class="date-day">${dow}</div>
+          </div>
+          <div class="shift-info">
+            <div class="shift-section">📌 ${s.section}</div>
+            <div class="shift-time">🕐 ${s.startTime} 〜 ${s.endTime}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ===== 全体シフト =====
+
+  function allShiftDateStr() {
+    return `${allShiftDate.getFullYear()}-${String(allShiftDate.getMonth()+1).padStart(2,'0')}-${String(allShiftDate.getDate()).padStart(2,'0')}`;
+  }
+
+  async function changeAllShiftDate(delta) {
+    allShiftDate.setDate(allShiftDate.getDate() + delta);
+    await renderAllShift();
+  }
+
+  async function renderAllShift() {
+    const dateStr = allShiftDateStr();
+    const d = new Date(dateStr + 'T00:00:00');
+    const dow = JS_DAY_MAP[d.getDay()];
+    document.getElementById('allShiftTitle').innerText = `${dateStr}（${dow}）`;
+
+    const container = document.getElementById('allShiftContent');
+    container.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">読み込み中...</div>';
+
+    // キャッシュ確認
+    let data;
+    if (allShiftCache[dateStr]) {
+      data = allShiftCache[dateStr];
+    } else {
+      const result = await callGAS({ action: 'getAllShifts', storeId, date: dateStr });
+      data = result.success ? result.data : [];
+      allShiftCache[dateStr] = data;
+    }
+
+    if (data.length === 0) {
+      container.innerHTML = '<div class="empty-msg">この日の確定シフトはありません</div>';
+      return;
+    }
+
+    // セクションごとにまとめる
+    const sections = {};
+    for (const s of data) {
+      if (!sections[s.section]) sections[s.section] = [];
+      const staffList = String(s.confirmedStaff || '').split(',').map(n => n.trim()).filter(n => n);
+      for (const name of staffList) {
+        sections[s.section].push({ name, startTime: s.startTime, endTime: s.endTime });
+      }
+    }
+
+    // 時間範囲を計算
+    const allTimes = [];
+    for (let h = 0; h < 24; h++) {
+      for (let m of [0, 30]) allTimes.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+    }
+
+    let minTime = '23:30', maxTime = '00:00';
+    for (const s of data) {
+      if (s.startTime < minTime) minTime = s.startTime;
+      if (s.endTime > maxTime) maxTime = s.endTime;
+    }
+    const slots = allTimes.filter(t => t >= minTime && t < maxTime);
+
+    // テーブル生成
+    let html = '<div class="allshift-container"><table class="allshift-table"><thead><tr>';
+    html += `<th style="min-width:55px; position:sticky; left:0; z-index:2; background:#333;">名前</th>`;
+    for (const t of slots) {
+      const isHour = t.endsWith(':00');
+      html += `<th style="min-width:${isHour?'34px':'26px'}; font-size:${isHour?'10px':'8px'}; color:${isHour?'white':'#aaa'};">${isHour ? t : t.slice(3)}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    // 人数合計カウント用
+    const totalCount = {};
+    slots.forEach(t => totalCount[t] = 0);
+
+    for (const [section, members] of Object.entries(sections)) {
+      // セクションヘッダー行
+      html += `<tr><td colspan="${slots.length + 1}" class="section-header">📌 ${section}</td></tr>`;
+
+      for (const member of members) {
+        html += `<tr><td class="name-cell">${member.name}</td>`;
+        let skipCount = 0;
+        for (let si = 0; si < slots.length; si++) {
+          if (skipCount > 0) { skipCount--; continue; }
+          const slot = slots[si];
+          const slotEnd = allTimes[allTimes.indexOf(slot) + 1];
+          if (member.startTime <= slot && slotEnd && member.endTime >= slotEnd) {
+            if (member.startTime === slot) {
+              const startIdx = slots.indexOf(member.startTime);
+              let endIdx = slots.indexOf(member.endTime);
+              if (endIdx < 0) endIdx = slots.length;
+              const span = endIdx - startIdx;
+              skipCount = span - 1;
+              html += `<td colspan="${span}" style="padding:3px;"><div class="shift-bar"></div></td>`;
+              // 合計カウント
+              for (let k = startIdx; k < endIdx; k++) {
+                if (slots[k]) totalCount[slots[k]] = (totalCount[slots[k]] || 0) + 1;
+              }
+            }
+          } else {
+            html += `<td class="empty-cell"></td>`;
+          }
+        }
+        html += '</tr>';
+      }
+    }
+
+    // 人数合計行
+    html += `<tr class="total-row"><td class="name-cell" style="background:#e0e0e0;">人数</td>`;
+    for (const t of slots) {
+      html += `<td>${totalCount[t] || 0}</td>`;
+    }
+    html += '</tr>';
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }
 </script>
 </body>
 </html>
